@@ -5,28 +5,6 @@
 			"I2C11": {"sda": "P6", "scl": "P3", "bitrate": 400000 },
 			"I2C12": {"sda": "P5", "scl": "P4", "bitrate": 400000 }
         },
-        "SysLED": {
-            "pins": ["B6"],
-            "name": "SysLED",
-            "article": "02-501-0704-201-0002",
-            "type": "actuator",
-			"channelNames": ["light"],
-            "quantityChannel": 1,
-			"busTypes": [],
-			"manufacturingData": {},
-            "modules": ["plcLED.min.js"]
-        },
-		"SysBuzzer": {
-		    "pins": ["A1"],
-            "name": "SysBuzzer",
-            "article": "02-501-0204-201-0001",
-            "type": "actuator",
-            "channelNames": ["freq"],
-            "quantityChannel": 1,
-            "busTypes": [],
-            "manufacturingData": {},
-            "modules": ["plcBuzzer.min.js"]
-		},
 		"AirAlcohol": {
 			"pins": ["A3"],
 			"name": "MQ3",
@@ -267,17 +245,6 @@
 			  "vbus": 0,
 			  "mode": 7
 			}
-		},
-		"RTC": {
-			"bus": "I2C10",
-			"name": "DS1307",
-			"article": "02-501-0108-201-0001",
-			"type": "sensor",
-			"channelNames": ["Unix"],
-			"quantityChannel": 1,
-			"busTypes": ["i2c"],
-			"manufacturingData": {},
-			"modules": ["plcRtcDS1307.min.js"]
 		},
 		"Servo": {
 			"pins": ["P2"],
