@@ -9,29 +9,25 @@ class ClassAirQualityCCS811 extends ClassSensor {
      * @constructor
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
-    constructor(_opts, _sensor_props) {
-        ClassSensor.apply(this, [_opts, _sensor_props]);
+    constructor(_opts) {
+        ClassSensor.call(this, _opts);
         this._Name = 'ClassAirQualityCCS811'; //переопределяем имя типа
 		this._Sensor = require('BaseClassCCS811.min.js').connect(_opts.bus, _opts.address, _opts.mode);
         this._MinPeriod = 250;
-        this._UsedChannels = [];
         this._Interval;
-        this._Margin = {};
-        this._Margin.temp = _opts.temp;
-        this._Margin.hum = _opts.hum;
+        this._Margin = {temp: _opts.temp, hum: _opts.hum};
         this._CanRead = true;
-        this.Init(_sensor_props);
+        this.Init();
     }
     /**
      * @method
      * Инициализирует датчик
      */
-    Init(_sensor_props) {
-        super.Init(_sensor_props);
+    Init() {
         this._Sensor.init();
         if (this._Margin.hum && this._Margin.temp) {
             this.SetTempHumMargin();
-        }
+        }        
     }
     /**
      * @method
@@ -54,14 +50,13 @@ class ClassAirQualityCCS811 extends ClassSensor {
      */
     Start(_num_channel, _period) {
         let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period    //частота сверяется с минимальной
-                 : this._MinPeriod;
-        let data;
-        if (!this._UsedChannels.includes(_num_channel)) this._UsedChannels.push(_num_channel); //номер канала попадает в список опрашиваемых каналов. Если интервал уже запущен с таким же периодои, то даже нет нужды его перезапускать 
+                 : this._MinPeriod; 
+        this._Channels[_num_channel].Status = 1;
         if (!this._Interval) {          //если в данный момент не ведется ни одного опроса
             this._Interval = setInterval(() => {
-                if (this._CanRead) data = this._Sensor.get();
-                if (this._UsedChannels.includes(0)) this.Ch0_Value = data.eCO2 | 0;
-                if (this._UsedChannels.includes(1)) this.Ch1_Value = data.TVOC | 0;
+                const data = this._Sensor.get();
+                if (this._Channels[0].Status) this._Channels[0].Value = data.eCO2 | 0;
+                if (this._Channels[1].Status) this._Channels[1].Value = data.TVOC | 0;
             }, period);
         }
     }
@@ -94,9 +89,8 @@ class ClassAirQualityCCS811 extends ClassSensor {
      * @param {Number} _num_channel   - номер канала, в который должен быть остановлен поток данных
      */
     Stop(_num_channel) {
-        if (_num_channel) this._UsedChannels.splice(this._UsedChannels.indexOf(_num_channel));
-        else {
-            this._UsedChannels = [];
+        this._Channels[_num_channel].Status = 0;
+        if (!this._Channels.find(ch => ch.Status)) {
             clearInterval(this._Interval);
             this._Interval = null;
         }

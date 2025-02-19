@@ -6,6 +6,7 @@ const STORAGE = 'Storage';
 const WIFI = 'Wifi';
 const WIZNET = 'WIZnet';
 const MAIN_CONFIG = 'init.json';
+const SYSTEM_CONFIG = 'system.json';
 const DEVICE_CONFIG = 'device.json';
 const NETWORK_CONFIG = 'network.json';
 const SERVICE_CONFIG = 'services.json';
@@ -17,11 +18,10 @@ const ACTUATOR_ANCESTOR = 'plcActuator.min.js';
 // Ноды
 const BUS_NODE = 'bus';
 const RTC_NODE = 'SysClock';
-const LED_NODE = 'SysLED';
-const BUZZ_NODE = 'SysBuzzer';
 const DEFAULT_FILE = '.bootcde';
 
 // Сообщения
+const MSG_STARTUP = 'Starting up framework\n';
 const MSG_SENSOR_ANCESTOR = 'File \'plcSensor.min.js\' is absent. You won\'t be able to create any sensors!';
 const MSG_ACTUATOR_ANCESTOR = 'File \'plcActuator.min.js\' is absent. You won\'t be able to create any actuators!';
 const MSG_NO_NETWORK_CONFIG = 'Cannot find \'network.json\'. Skipping network setup';
@@ -31,13 +31,9 @@ const MSG_RTC_SUCCESS = 'System time is set via RTC clock module';
 const MSG_RTC_COMPLETE = 'RTC check complete. Clock syncronized';
 const MSG_RTC_ADJUSTED = 'Date of RTC clock module adjusted';
 const MSG_RTC_NOT_FOUND = 'RTC clock not found!';
-const MSG_RTC_NOT_SPECIFIED = 'RTC clock is not specified in device.conf!';
-const MSG_LED_NOT_SPECIFIED = 'System LED is not specified in device.conf!';
-const MSG_BUZZ_NOT_SPECIFIED = 'System Buzzer is not specified in device.conf!';
-const MSG_LED_FOUND = 'Found system LED at pin ';
-const MSG_BUZZ_FOUND = 'Found system buzzer at pin ';
-const MSG_LED_FAILED = 'Failed to set system LED:';
-const MSG_BUZZ_FAILED = 'Failed to set system buzzer:';
+const MSG_RTC_NOT_SPECIFIED = 'RTC clock is not specified in system.json!';
+const MSG_FREE_FLASH = 'Currently free flash memory:';
+const MSG_LOW_FLASH = 'Low free flash memory. Try clearing log files.'
 const MSG_TIME_SET_FAIL = 'Failed to properly set system time!';
 const MSG_TIME_SET_SUCCESS = 'System time set to';
 const MSG_DRIVER_ERROR = 'Error loading driver';
@@ -80,6 +76,9 @@ class ClassProcess {
         if (!(this._FileReader.list().includes(MAIN_CONFIG)))
             throw `${MSG_FATAL_CANT_FIND} ${MAIN_CONFIG}`;
 
+        if (!(this._FileReader.list().includes(SYSTEM_CONFIG)))
+            throw `${MSG_FATAL_CANT_FIND} ${SYSTEM_CONFIG}`;
+
         if (!(this._FileReader.list().includes(DEVICE_CONFIG)))
             throw `${MSG_FATAL_CANT_FIND} ${DEVICE_CONFIG}`;
 
@@ -93,10 +92,7 @@ class ClassProcess {
         }
 
         this._RTC = undefined;
-        this._Newwork = undefined;
         this._HaveNet = false;
-        this._SysBuzzer = undefined;
-        this._SysLED = undefined;
         this._Name = 'Process';
         this._IsFinished = false;
     }
@@ -119,6 +115,8 @@ class ClassProcess {
             }));
             this.PrintLogo();
             this._BoardName = `${this._FileReader.readJSON(MAIN_CONFIG, true).name || MSG_EMPTY}`;
+
+            this._FileReader.open('syslog.txt', 'a').write(MSG_STARTUP);
 
             Object.values(H)
                 .filter(serv => (serv.Importance === 'Primary'))
@@ -145,6 +143,12 @@ class ClassProcess {
 
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_BOARD_ID} ${this._BoardName} (${process.env.BOARD} ${process.env.SERIAL})`});
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_LOAD_FILE} ${this._LoadFile}`});
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_FREE_FLASH} ${this._FileReader.getFree()} bytes.`});
+            if (this._FileReader.getFree() < 100) {
+                H.Logger.Service.Log({service: this._Name, level: 'W', msg: `${MSG_LOW_FLASH}`});
+            }
+
+            delete this._LoadFile;
 
             if (!(this._FileReader.list().includes(SENSOR_ANCESTOR))) {
                 H.Logger.Service.Log({service: this._Name, level: 'N', msg: MSG_SENSOR_ANCESTOR});
@@ -153,8 +157,8 @@ class ClassProcess {
                 H.Logger.Service.Log({service: this._Name, level: 'N', msg: MSG_ACTUATOR_ANCESTOR});
             }
 
-            this.InitSysEvents();
             this.InitializeModuleDrives();
+            this.InitSysEvents();            
 
             /** Internet connection and system time*/
             try {
@@ -219,6 +223,7 @@ class ClassProcess {
                     H.Network.Service.Init(netconf, bus, flag, (res) => {
                         this._HaveNet = res;
                         if (this._HaveNet) {
+                            H.Logger.Service.InitGraylogOutput(H.Logger.AdvancedOptions);
                             Object.values(H)
                                 .filter(serv => (serv.Importance === 'Auxilary'))
                                 .sort((a,b) => a.InitOrder - b.InitOrder)
@@ -254,84 +259,57 @@ class ClassProcess {
             this.SetSystemTime();
             this.CheckSystemTime();
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_BOOTUP_SUCCESS});
+            delete this._FileReader;
             Object.emit('complete');
         }
     }
     InitSysEvents() {
         let on = false;
         let interval;
-        let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
-
-        try {
-            if (Object.keys(conf).includes(LED_NODE)) {
-                this._SysLED = H.DeviceManager.Service.CreateDevice(LED_NODE)[0];
-                H.Logger.Service.Log({service: this._Name, level: 'i', msg: `${MSG_LED_FOUND + this._SysLED._ThisActuator._Pins[0]}`});
-                this._SysLED.SetValue(0);
-            }
-            else {
-                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_LED_NOT_SPECIFIED});
-            }
-        }
-        catch (e) {
-            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_LED_FAILED} ${e.message}`});
-        }
-
-        try {
-            if (Object.keys(conf).includes(BUZZ_NODE)) {
-                this._SysBuzzer = H.DeviceManager.Service.CreateDevice(BUZZ_NODE)[0];
-                H.Logger.Service.Log({service: this._Name, level: 'i', msg: `${MSG_BUZZ_FOUND + this._SysBuzzer._ThisActuator._Pins[0]}`});
-            }                
-            else {
-                H.Logger.Service.Log({service: this._Name, level: 'W', msg: MSG_BUZZ_NOT_SPECIFIED});
-            }
-        }
-        catch (e) {
-            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_BUZZ_FAILED} ${e.message}`});
-        }
 
         Object.on('complete', () => {
-            if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.4)}
-            if (this._SysLED) {this._SysLED.SetValue(1)}
+            if (sysbuzz) {sysbuzz.SetValue(0.4)}
+            if (sysled) {sysled.SetValue(1)}
             if(Process._HaveNet) {
                 setTimeout(() => {
-                    if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.8)}
+                    if (sysbuzz) {sysbuzz.SetValue(0.8)}
                 }, 100);
             }
             setTimeout(() => {
-                if (this._SysBuzzer) {this._SysBuzzer.SetValue(0)}                
+                if (sysbuzz) {sysbuzz.SetValue(0)}                
             }, 200);
         });
 
         Object.on('connect', () => {
-            if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.5)}
+            if (sysbuzz) {sysbuzz.SetValue(0.5)}
             setTimeout(() => {
-                if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.9)}
+                if (sysbuzz) {sysbuzz.SetValue(0.9)}
                 setTimeout(() => {
-                    if (this._SysBuzzer) {this._SysBuzzer.SetValue(1)}
+                    if (sysbuzz) {sysbuzz.SetValue(1)}
                     setTimeout(() => {
-                        if (this._SysBuzzer) {this._SysBuzzer.SetValue(0)}
+                        if (sysbuzz) {sysbuzz.SetValue(0)}
                     }, 100);
                 }, 100);
             }, 500);
             interval = setInterval(() => {
                 on = !on;
-                if (this._SysLED) {this._SysLED.SetValue(0.5 + (0.5 * on))}
+                if (sysled) {sysled.SetValue(0.5 + (0.5 * on))}
             }, 500);
         });
 
         Object.on('disconnect', () => {
-            if (this._SysBuzzer) {this._SysBuzzer.SetValue(1)}
+            if (sysbuzz) {sysbuzz.SetValue(1)}
             setTimeout(() => {
-                if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.6)}
+                if (sysbuzz) {sysbuzz.SetValue(0.6)}
                 setTimeout(() => {
-                    if (this._SysBuzzer) {this._SysBuzzer.SetValue(0.5)}
+                    if (sysbuzz) {sysbuzz.SetValue(0.5)}
                     setTimeout(() => {
-                        if (this._SysBuzzer) {this._SysBuzzer.SetValue(0)}
+                        if (sysbuzz) {sysbuzz.SetValue(0)}
                     }, 100);
                 }, 100);
             }, 500);
             clearInterval(interval);
-            if (this._SysLED) {this._SysLED.SetValue(1)}
+            if (sysled) {sysled.SetValue(1)}
         });
 
         Object.on('ntp_done', () => {
@@ -349,11 +327,11 @@ class ClassProcess {
      * Инициализирует модули, описанные в выбранной конфигурации
      */
     InitializeModuleDrives() {
-        let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
+        let conf = Object.assign(this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig], this._FileReader.readJSON(SYSTEM_CONFIG, true));
         let driverArr = new Array();
 
         Object.keys(conf).forEach(driver => {
-            if (driver != BUS_NODE && driver != LED_NODE && driver != BUZZ_NODE && driver != RTC_NODE)
+            if (driver != BUS_NODE)
             {
                 try {
                     let instance = H.DeviceManager.Service.CreateDevice(driver);
@@ -371,7 +349,7 @@ class ClassProcess {
                     
                 }
                 catch (e) {
-                    H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_DRIVER_ERROR} ${e.message}`});
+                    H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_DRIVER_ERROR} ${driver} ${e.message}`});
                 }
             }
         })
@@ -406,7 +384,11 @@ class ClassProcess {
      * @returns 
      */
     GetDeviceConfig(id) {
-        return (((this._FileReader.readJSON(DEVICE_CONFIG, true) || {})[this._DeviceConfig]) || {})[id];
+        if (id.startsWith('Sys')) {
+            return require(STORAGE).readJSON(SYSTEM_CONFIG, true)[id];
+        }
+        else
+            return (((require(STORAGE).readJSON(DEVICE_CONFIG, true) || {})[this._DeviceConfig]) || {})[id];
     }
     /**
      * @method
@@ -414,7 +396,7 @@ class ClassProcess {
      * @returns {Object}
      */
     GetBusesConfig(){
-        return this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig][BUS_NODE];
+        return require(STORAGE).readJSON(DEVICE_CONFIG, true)[this._DeviceConfig][BUS_NODE];
     }
     /**
      * @method 
@@ -422,7 +404,7 @@ class ClassProcess {
      * @returns {Object}
      */
     GetMQTTClientConfig() {
-        return this._FileReader.readJSON(MQTT_CONFIG, true)[this._DeviceConfig];
+        return require(STORAGE).readJSON(MQTT_CONFIG, true)[this._DeviceConfig];
     }
     /**
      * @method
@@ -430,13 +412,13 @@ class ClassProcess {
      */
     SetSystemTime() {
         try {
-            let conf = this._FileReader.readJSON(DEVICE_CONFIG, true)[this._DeviceConfig];
+            let conf = require(STORAGE).readJSON(SYSTEM_CONFIG, true);
 
             if (!(Object.keys(conf).includes(RTC_NODE))) {
                 throw {message: MSG_RTC_NOT_SPECIFIED};
             }
 
-            this._RTC = H.DeviceManager.Service.CreateDevice(RTC_NODE)[0];
+            this._RTC = H.DeviceManager.Service.CreateDevice(RTC_NODE, conf[RTC_NODE])[0];
             let ts = this._RTC._Sensor.GetTimeUnix();
             let sys_t = Math.floor(new Date().getTime() / 1000);
 
@@ -528,7 +510,7 @@ class ClassProcess {
             H.Logger.Service.Log({service: this._Name, level: _lvl, msg: _msg});
         }
         catch (e) {
-            console.log(`[${this.GetSystemTime()}] ${this._Name} | ${_lvl} | ${_msg}`);
+            console.log(`Error ${e}`);
         }
     }
 }

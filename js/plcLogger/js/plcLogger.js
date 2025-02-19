@@ -53,7 +53,7 @@ class GrayLogTransport {
             });
         }
         catch (e) {
-            console.log(`[${Process.GetSystemTime()}] ${srvc} | ERROR | ${e}. Recreating. . .`);
+            console.log(`[${Process.GetSystemTime()}] ${_packet.service} | ERROR | ${e}. Recreating. . .`);
             this.socket = require('dgram').createSocket('udp4');
         }
     }
@@ -75,6 +75,7 @@ class ClassLogger {
         }
         this.name = 'ClassLogger'; //переопределяем имя типа
         this._Glog = new GrayLogTransport(options || {});
+        this._Debug = options.debug || true;
     }
     /**
      * @getter
@@ -94,6 +95,12 @@ class ClassLogger {
         const str = _str.toUpperCase();
         return str.charAt(0).toUpperCase() + str.slice(1);
     }
+    InitConsoleOutput() {
+        ;
+    }
+    InitGraylogOutput() {
+        ;
+    }
     /**
      * @method
      * @description
@@ -111,11 +118,18 @@ class ClassLogger {
             flevel = level+2;
         }
 
-        if (Process._HaveNet) {
-            this._Glog.Log({message: _msg.msg, level: flevel, level_desc: fdesc, service: _msg.service, full_message: _msg.obj || {}});
+        if (Process._HaveNet || (Process._Console && this._Debug)) {
+            if (Process._HaveNet) {
+                this._Glog.Log({message: _msg.msg, level: flevel, level_desc: fdesc, service: _msg.service, full_message: _msg.obj || {}});
+            }
+            
+            if (Process._Console && this._Debug) {
+                console.log(`[${Process.GetSystemTime()}] ${_msg.service} | ${fdesc} | ${_msg.msg}`);
+            }
         }
-        
-        console.log(`[${Process.GetSystemTime()}] ${_msg.service} | ${fdesc} | ${_msg.msg}`);
+        else {
+            require("Storage").open('syslog.txt', 'a').write(`[${Process.GetSystemTime()}] ${_msg.service} | ${fdesc} | ${_msg.msg}\n`);
+        }        
     }
 }
 exports = ClassLogger;

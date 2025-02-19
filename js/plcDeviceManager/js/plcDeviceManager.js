@@ -1,9 +1,13 @@
+const ClassSensor   = require('plcSensor.min.js');
+const ClassActuator = require('plcActuator.min.js');
+
 const POLLING_FREQ = 5;
 /**
  * @typedef ClassMsg
  * @property {[string|number]} arg
  * @property {[string|number]} value
  */
+
 /**
  * @class
  * Реализует функционал службы для работы с измерительно-исполняющими устройствами: 
@@ -22,6 +26,8 @@ class ClassDeviceManager {
         // запуск циклического опроса
         Object.on('dm-sub-sensorall', (_msg) => {
             // let freq = _msg.arg[0];
+            H.Logger.Service.Log({ service: 'DM', level: 'I',  msg: `dm-sub-sensorall` });
+            this.OnSubSensorall(_msg);
             if (!this._Interval) this.StartPolling(POLLING_FREQ);
         });
         // его остановка
@@ -33,15 +39,84 @@ class ClassDeviceManager {
 
         this.InitBuses();
     }
+
     get Devices() { return this._Devices; }
 
-    get Sensors() {
-        return this._Devices.filter(device => device._Type.toLowerCase() === 'sensor' || device._Type.toLowerCase() === 'hybrid');
+    get Sensors() { return this._Devices.filter(device => device instanceof ClassSensor); }
+
+    get Actuators() { return this._Devices.filter(device => device instanceof ClassActuator); }
+    /**
+     * @getter
+     * Возвращает массив всех каналов 
+     */    
+    get Channels() {
+        let ch_list = [];
+        this.Devices.forEach(_dev => {
+            _dev._Channels.forEach(_ch => ch_list.push(_ch));
+        });
+        return ch_list;
+    }
+    /**
+     * @getter
+     * Возвращает массив каналов сенсоров
+     */
+    get SensorChannels() {
+        let ch_list = [];
+        this.Sensors
+            .forEach(_dev => {
+                _dev._Channels.forEach(_ch => ch_list.push(_ch));
+            });
+        return ch_list;
+    }
+    /**
+     * @getter
+     * Возвращает массив каналов актуаторов
+     */
+    get ActuatorChannels() {
+        let ch_list = [];
+        this.Actuators
+            .forEach(_dev => {
+                _dev._Channels.forEach(_ch => ch_list.push(_ch));
+            });
+        return ch_list;
+    }
+    /**
+     * @typedef TypeDeviceMappingInfo
+     * @property {string} address
+     * @property {string} name
+     */
+    /**
+     * @typedef TypeSubSensList
+     * @property {[TypeDeviceMappingInfo]} sensor
+     * @property {[TypeDeviceMappingInfo]} actuator
+     */
+    /**
+     * @method
+     * @description возвращает объект с данными, необходимыми для маппинга сенсоров и актуаторов
+     * @returns {TypeSubSensList}
+     */
+    GetSublist() {
+        return ({ 
+            sensor:     this.SensorChannels.filter(_ch => _ch.Address).map(_ch => ({ name: _ch.ID, address: _ch.Address })), 
+            actuator: this.ActuatorChannels.filter(_ch => _ch.Address).map(_ch => ({ name: _ch.ID, address: _ch.Address })) 
+        });
+    }
+    /**
+     * @method
+     * @description Возвращает список каналов PLC согласно протоколу lhp
+     */
+    GetLHPDevlist() {
+        let value = { sensor: [], actuator: [] };
+        
+        this.ActuatorChannels.forEach(_ch => {
+            value.sensor.push(`${_ch.Device._Article}-${_ch.ID}`);
+        });
+        this.SensorChannels.forEach(_ch => {
+            value.actuator.push(`${_ch.Device._Article}-${_ch.ID}`);
+        });
+        return value;
     }
 
-    get Actuators() {
-        return this._Devices.filter(device => device._Type.toLowerCase() === 'actuator');
-    }
     /**
      * @method
      * @description Выполняет инициализацию всех шин, указанных в конфиге к текущей программе.
@@ -49,20 +124,21 @@ class ClassDeviceManager {
     InitBuses() {
         let config = Process.GetBusesConfig();
 
-        for (let busName of Object.keys(config)) {
+        for (let busName of Object.keys(config).sort()) {
             try {
                 let opts = config[busName];
                 // Приведение строкового представления пинов к получению их объектов                                   
                 for (let option of Object.keys(opts)) {
                     if (option !== 'bitrate') opts[option] = this.GetPinByStr(opts[option]);
                 }
-                let busObj;
-                if (busName.startsWith('I2C')) busObj = H.I2Cbus.Service.AddBus(opts);
-                if (busName.startsWith('SPI')) busObj = H.SPIbus.Service.AddBus(opts);
-                if (busName.startsWith('UART')) busObj = H.UARTbus.Service.AddBus(opts);
+                opts.name = busName;
+                if (busName.startsWith('I2C')) H.I2Cbus.Service.AddBus(opts);
+                else if (busName.startsWith('SPI')) H.SPIbus.Service.AddBus(opts);
+                else if (busName.startsWith('UART')) H.UARTbus.Service.AddBus(opts);
+                else throw 'Unsupported bus signature.'
 
             } catch (e) {
-                // log failed to init bus [busname]
+                H.Logger.Service.Log({ service: 'DM', level: 'E',  msg: `Failed to init bus ${busName}: ${e}` });
             }
         }
     }  
@@ -150,25 +226,23 @@ class ClassDeviceManager {
      * Собирает и возвращает информацию о датчиках
      * @param {[String]} idArr - массив id
      */
-    OnDevicesListGet() {
-        let data_package = {
+    OnDevicesListGet(_msg) {
+        let msg = {
             com: 'dm-deviceslist-set',
-            value: [{ sensor: [], actuator: [] }]
-        };
-        // перебор устройств
-        this.Sensors.forEach(_sens => {
-            _sens._Channels.forEach(ch => {
-                data_package.value[0].sensor.push(`${_sens._Article}-${ch.ID}`);
-            });
-        });
+            value: [this.GetLHPDevlist()]
+        }
+        // Object.emit(msg.com, msg);
+        this.SendWS(msg);
+    }
 
-        this.Actuators.forEach(_act => {
-            _act._Channels.forEach(ch => {
-                data_package.value[0].actuator.push(`${_act._Article}-${ch.ID}`);
-            });
-        });
-
-        this.SendWS(data_package);
+    OnSubSensorall(_msg) {
+        let source = _msg.metadata ? _msg.metadata.source ? _msg.metadata.source : undefined : undefined;
+        if (!source) return;
+        let msg = {
+            com: `${source}-sub-sensorall`,
+            value: [this.GetSublist()]
+        }
+        Object.emit(msg.com, msg);
     }
     /**
      * @method
@@ -245,30 +319,30 @@ class ClassDeviceManager {
      * @returns {Object} Объект датчика
      */
     CreateDevice(id, opts) {
-        opts = opts || { moduleNum: 0 };
+        // opts = opts || { moduleNum: 0 };
         if (typeof id !== 'string') {
-            console.log(`ERROR>> id argument must to be a string`);
+            // console.log(`ERROR>> id argument must to be a string`);
             return undefined;
         }
 
         let dev = this.Devices.find(d => d.ID === id);
         if (dev) return dev._Channels;
 
-        let sensorConfig = Process.GetDeviceConfig(id);
+        let sensorConfig = opts || Process.GetDeviceConfig(id);
 
         if (!sensorConfig) {
-            console.log(`ERROR>> Failed to get ${id} config"`);
+            H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Failed to get ${id} config` });
             return undefined;
         }
-
-        // let module = Process.ImportDeviceModule(sensorConfig.name, opts.moduleNum);
-        let module = require(sensorConfig.modules[opts.moduleNum]);
-        if (opts.key) module = module[key];
-        if (!module) {
-            console.log(`ERROR>> Cannot load ${sensorConfig.module}"`);
+        let module;
+        try {
+            module = require(sensorConfig.modules[0]);
+        } catch (e) {
+            H.Logger.Service.Log({ service: 'DM', level: 'E', 
+                msg: `Cannot load ${sensorConfig.modules[0]}` });
             return undefined;
         }
-
+        
         if (sensorConfig.bus) sensorConfig.bus = this.GetBusByID(sensorConfig.bus);
         
         sensorConfig.pins = sensorConfig.pins || [];
@@ -276,13 +350,16 @@ class ClassDeviceManager {
         sensorConfig.id = id;
 
         if (!this.ArePinsAvailable(sensorConfig.pins)) {
-            console.log(`ERROR>> Pins [${opts.pins.join(', ')}] are already used`);
+            H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Pins [${opts.pins.join(', ')}] are already used` });
             return undefined;
         }
-
-        let device = new module(sensorConfig, sensorConfig);
-        this.AddDevice(device);
-        return device._Channels;
+        try {
+            let device = new module(sensorConfig, sensorConfig);
+            this.AddDevice(device);
+            return device._Channels;
+        } catch (e) {
+            H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Error creating ${id}: ${e}` });
+        }
     }
     /**
      * @method

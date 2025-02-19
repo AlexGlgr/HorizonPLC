@@ -48,7 +48,9 @@ AirQuality.prototype.readI2C = function(reg, count) {
 AirQuality.prototype.init = function() {
     this.writeI2C(REG_SOFT_RESET, [0x11, 0xE5, 0x72, 0x8A]);
     setTimeout(() => {
-        if (this.whoAmI() === WHO_I_AM) {        
+        let wia = this.whoAmI();
+        //console.log(wia);
+        if (wia === WHO_I_AM) {        
             if (this.readI2C(REG_STAT) & STATUS_APP_REA) {
                 this.writeI2C(REG_BOOTLOAD, []);
                 setTimeout(() => {
@@ -65,9 +67,9 @@ AirQuality.prototype.init = function() {
             }
         }
         else {
-            throw "Failed 'WHO AM I' check!";
+            throw `Failed 'WHO AM I' check! ${wia}`;
         }
-    }, 100);
+    }, 200);
 };
 
 // The method returns the device identifier

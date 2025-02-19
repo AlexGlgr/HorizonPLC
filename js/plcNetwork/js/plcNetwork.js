@@ -123,7 +123,7 @@ class ClassWifi {
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Scanning the net. . .'});
             this._Core.scan((err, scn) => {
                 this._Scan = scn;
-                let pass = this.GetNetPassword(this._Scan);
+                let pass = this.GetNetPassword(nc.accpoints);
                 callback(pass);
             })
         }

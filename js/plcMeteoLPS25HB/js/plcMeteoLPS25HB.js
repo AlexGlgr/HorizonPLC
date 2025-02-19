@@ -40,7 +40,7 @@ class ClassLPS25HB extends ClassSensor {
             this._Interval = setInterval(() => {
                 if (this._Channels[0].Status) this._Channels[0].Value = this._Sensor.temp();
                 if (this._Channels[1].Status) this._Channels[1].Value = this._Sensor.pressure();
-                // if (this._Channels[2].Status) this._Channels[2].Value = (this._CalPressure - (this.Ch1_Value * 7.501)) * 10.5;
+                //if (this._Channels[2].Status) this._Channels[2].Value = (this._CalPressure - (this._Channels[1].Value * 7.501)) * 10.5;
             }, period);
         }
     }

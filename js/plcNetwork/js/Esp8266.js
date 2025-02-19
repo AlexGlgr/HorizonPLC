@@ -323,22 +323,17 @@ var wifiFuncs = {
       });
     });
   },
-  scan: function(callback) {
+  scan: function (callback) {
     var aps = [];
-    at.cmdReg('AT+CWLAP\r\n', 5000, '+CWLAP:', function(d) {
-        var ap = d.slice(8, -1).split(',');
-        //console.log(d);
-        aps.push({
-          ssid: JSON.parse(ap[1]),
-          enc: ENCR_FLAGS[ap[0]],
-          signal: parseInt(ap[2]),
-          mac: JSON.parse(ap[3])
-        });
-      },
-      function() {
-        callback(null, aps);
-      }
-    );
+    at.cmdReg("AT+CWLAP\r\n", 5000, "+CWLAP:",
+              function(d) {
+                var ap = d.slice(8,-1).split(",");
+                aps.push({ ssid : JSON.parse(ap[1]),
+                           enc: ENCR_FLAGS[ap[0]],
+                           signal: parseInt(ap[2]),
+                           mac : JSON.parse(ap[3]) });
+              },
+              function() { callback(null, aps); });
   },
   getConnectedAP : function(callback) {
     var con;
@@ -430,15 +425,19 @@ var wifiFuncs = {
 
 
 exports.setup = function(usart, connectedCallback) {
+  netCallbacks.on('err', function(e) {
+    wifiFuncs.emit('err', e);
+  });
+
   wifiFuncs.at = at = require("AT").connect(usart);
   require("NetworkJS").create(netCallbacks);
   at.register("+IPD", ipdHandler);
-  at.register("+CW", line => { // handle +CWJAP/etc
+  /*at.register("+CW", line => { // handle +CWJAP/etc
     var end = line.indexOf("\n");
     if (end<0) return line;
     //print("+CW", line);
     return line.substr(end+1);
-  });
+  });*/
   at.registerLine("0,CONNECT", sckOpen);
   at.registerLine("1,CONNECT", sckOpen);
   at.registerLine("2,CONNECT", sckOpen);

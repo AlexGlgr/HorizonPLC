@@ -91,8 +91,21 @@ class ClassBaseI2CBus {
            throw new EL_Error('Test', 20);
         }
 
+        let bus_name = _opt.name;
+        delete _opt.name;
+
+        if (typeof this._I2Cbus[bus_name] !== 'undefined') {
+            if (this._I2Cbus[bus_name].Used) {
+                throw 'Bus already used.'
+            }
+            this._I2Cbus[bus_name].IDbus.setup(_opt);
+            this._I2Cbus[bus_name].Used = true;
+
+            return this._I2Cbus[bus_name];
+        }
+
         /*все необходимые для создания шины параметры переданы -> создать и инициализировать новую шину*/
-        let bus_name = this._Pattern + this._IndexBus; //полное имя ключа текущей шины
+        bus_name = this._Pattern + this._IndexBus; //полное имя ключа текущей шины
         
         this._I2Cbus[bus_name] = {
             IDbus: new I2C(), //сгенерировать шину
