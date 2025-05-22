@@ -30,27 +30,18 @@
 
 Конструктор принимает данные из конфига. Пример ниже:
 ```json
-"Battery": 
-{
-    "fullChargeV": 4.2,
-    "dischargeV": 3.4,
-    "k": 0.7797,
-    "pins": ["A0"],
+"14": {
+    "fullChargeV": 4.2,     // напряжение на аккумуляторе при макс. уровне заряда
+    "dischargeV": 3.4,      // при мин. уровне
+    "k": 0.7797,            // делитель напряжения
+    "pins": ["A0"],         // пин, на который подается напряжение, пропорциональное напряжению на аккумуляторе
     "name": "Battery",
-    "article": "02-501-0402-201-0001",
     "type": "actuator",
     "channelNames": ["charge, voltage"],
     "quantityChannel": 2,
-    "busTypes": [],
-    "manufacturingData": {},
     "modules": ["plcBattery.min.js"]
 }
 ```
-Следует выделить следующие ноды, имеющие особенности для этого модуля:
-- <mark style="background-color: lightblue">fullChargeV</mark> - напряжение на аккумуляторе при макс. уровне заряда;
-- <mark style="background-color: lightblue">dischargeV</mark> - напряжение на аккумуляторе при мин. уровне заряда;
-- <mark style="background-color: lightblue">k</mark> - коэффициент делителя напряжения.
-
 **Примечание**: значение *fullChargeV* можно замерить самостоятельно. *dischargeV* выбирается в зависимости от модели источника питания и температуры. Коэффициент *k* можно вычислить либо зная номиналы резисторов, либо рассчитав *Uвых/Uвх*.
 </div>
 
@@ -94,19 +85,20 @@
 
 ```js
 // Создание объекта класса
-let battery = H.DeviceManager.Service.CreateDevice('Battery');
+let battery = H.DeviceManager.Service.CreateDevice('14');
 let charge = battery[0];
 let voltage = battery[1];
 charge.Start();
 
 setTimeout(() => {
-    H.Logger.Service.Log({service: 'Battery', level: 'I', msg: `Charge: ${(charge.Value).toFixed(0)} %    Voltage: ${(voltage.Value).toFixed(2)} V`});
-}, 1000);
+    console.log(`Current charge is ${(charge.Value).toFixed(0)} %`);
+    console.log(`Current voltage on battery is ${(voltage.Value).toFixed(2)} V`);
+}, 500);
 
 ```
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -114,13 +106,8 @@ setTimeout(() => {
 ### Зависимости
 <div style = "color: #555">
 
-- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
-- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
-- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
-- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
-- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
-
-
 </div>
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>

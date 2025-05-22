@@ -17,7 +17,7 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с бистабильными цифровыми кнопками в рамках фреймворка Horizon Automated. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). Взаимодействие осуществляется через 0-й канал. 
+Модуль предназначен для работы с бистабильными цифровыми кнопками в рамках фреймворка Horizon Automated. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). Взаимодействие осуществляется через 0-й канал. 
 
 Особенность бистабильной кнопки заключается в том, что при клике она изменяет свое состояние и сохраняет его до следующего клика. 
 
@@ -32,11 +32,11 @@
 ```json
 "btnLed": {
     "pins": ["P11"],
-    "name": "DigitalLed",
+    "name": "BtnLED",
     "article": "",
     "type": "actuator",
     "quantityChannel": 1,
-    "modules": ["ModuleDigitalLed.min.js"]
+    "modules": ["plcLED.min.js"]
 },
 "btn": {
     "pins": ["A3"],
@@ -47,7 +47,7 @@
     "type": "hybrid",   // Обратите внимание!
     "channelNames": ["press"],
     "quantityChannel": 1,
-    "modules": ["ModuleBistableButton.min.js"]
+    "modules": ["plcBistableButton.min.js"]
 }
 ```
 </div>
@@ -55,7 +55,7 @@
 ### Поля
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">_SubDevices_</mark> - поле родительского класса; ссылка на исполнительный канал/-ы LED индикатора на кнопке;
+- <mark style="background-color: lightblue">_SubChannels_</mark> - поле родительского класса; ссылка на исполнительный канал/-ы LED индикатора на кнопке;
 - <mark style="background-color: lightblue">_DefaultState</mark> - статус кнопки при запуске;
 - <mark style="background-color: lightblue">_Debounce</mark> - "антидребезг" при мониторинге кнопки;
 - <mark style="background-color: lightblue">_TimeoutDelay</mark> - время таймаута в секундах.
@@ -90,7 +90,7 @@
 <div style = "color: #555">
 
 ```js
-let btn = SensorManager.CreateDevice('18')[0];
+let btn = H.DeviceManager.Service.CreateDevice('18')[0];
 btn.Start();
 
 btn.on('enable',      () => { print('on'); });
@@ -102,7 +102,7 @@ btn.on('changeState', () => { print('change state'); });
 
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-3.png'>
+    <img src='./example-3.png'>
 </div>
 
 ### Таймаут-кнопка
@@ -116,6 +116,8 @@ btn.Configure({ timeout: 5000 });
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

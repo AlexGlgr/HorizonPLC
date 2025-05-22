@@ -16,29 +16,57 @@ class ClassProxyMQTT {
      */
     constructor(_mqtt, _subs) {
         this._MQTT = _mqtt;
-        this._Subs = _subs || { dm: { 'sensor': {}, 'actuator': {} }};
+        this._Subs = { dm: { 'sensor': [], 'actuator': [] } };
 
         this._SkipData = false;
         this._DataSkipInterval = null;
         // EVENTS
-        Object.on('all-data-raw-get', this.OnSensorData.bind(this)); 
+        Object.on('proxymqtt-sub-sensorall', this.HandlerEvents_proxymqtt_sub_sensorall.bind(this));
+        Object.on('all-data-raw-get', this.HandlerEvents_all_data_raw.bind(this)); 
         this._MQTT.on('connected',    this.OnConnected.bind(this));
         this._MQTT.on('publish',      this.OnPublish.bind(this));
         this._MQTT.on('disconnected', this.OnDisconnected.bind(this));
+        this._MQTT.on('error', this.OnError.bind(this));
     }
 
     /**
      * @method
-     * @description Обработчик данных, полученных от Sensor Manager 
+     * @description Обработчик данных, полученных от DeviceManager 
      * @param {Object} _msg 
      */
-    OnSensorData(_msg) {
-        if (!this._DataSkipInterval || !this._SkipData) {
+    HandlerEvents_all_data_raw(_msg) {
+        if (!this._SkipData) {
             const ch_id = _msg.arg[0];
-            const topic = this._Subs.dm.sensor[ch_id];
+            const topic = this._Subs.dm.sensor
+                .find(_mapObjs => _mapObjs.name == ch_id) || {}
+                .address;
             if (typeof topic == 'string' && this._MQTT.connected)
                 this._MQTT.publish(topic, JSON.stringify(_msg.value[0]));
         }  
+    }
+
+    /**
+     * @method
+     * @description Обработчик сообщения от DM.
+     * Сохраняет данные для маппинга каналов с топиками.
+     * Инициирует подписку на топики каналов сенсоров.
+     * @param {*} _msg 
+     */
+    HandlerEvents_proxymqtt_sub_sensorall(_msg) {
+        try {
+            this._Subs.dm.sensor   = this._Subs.dm.sensor   || list[0].sensor;
+            this._Subs.dm.actuator = this._Subs.dm.actuator || list[0].actuator;
+            // подписываемся только на топики сенсоров
+            let sub_topic_list = this._Subs.dm.sensor.map(_mapObj => _mapObj.address);
+            this._MQTT.subscribe(sub_topic_list);
+            H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT subscribed on topics ${actuator_topic_names}` });
+        } catch (e) {
+            H.Logger.Service.Log({ 
+                service: 'proxymqtt', 
+                level: 'E', 
+                msg: `Error processing "proxymqtt-sub-sensorall" msg` 
+            });
+        }
     }
 
     /**
@@ -47,20 +75,23 @@ class ClassProxyMQTT {
      * @description Устанавливает обработчик на событие 'publish' клиента. Инициирует вызов сообщение 'dm-actuator-set' 
      */
     OnPublish(pub) {
-        const ch_id = Object.keys(this._Subs.dm.actuator).find(_key => this._Subs.dm.actuator[_key] == pub.topic);
+        // Находим маппинг по топику и забираем ID канала
+        const ch_id = this._Subs.dm.actuator
+            .find(_mapObj => _mapObj.address == pub.topic) || {}
+            .name;
         if (typeof ch_id == 'string')
             Object.emit('dm-actuator-set', { arg: [ch_id], value: [pub.message] });
     }
 
     /**
      * @method
-     * @description Устанавливает обработчик на событие 'disconnected' клиента, который обеспечивает вызов сообщение 'dm-actuator-set' 
+     * @description Устанавливает обработчик на событие 'disconnected' клиента
      */
     OnDisconnected() {
-        H.Logger.Service.Log({service: 'MQTT', level: 'I', msg: `MQTT disconnected!`});
+        H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT disconnected!` });
         
         let c = 0;
-        /*let interval = setInterval(() => {
+        let interval = setInterval(() => {
             if (this._MQTT.connected) {
                 clearInterval(interval);
                 return;
@@ -72,7 +103,7 @@ class ClassProxyMQTT {
             }
             H.Logger.Service.Log('MQTT', H.Logger.Service.LogLevel.INFO, `MQTT trying to reconnect..`);
             this._MQTT.connect();
-        }, 3000);*/
+        }, 5000);
     }
 
     /**
@@ -80,8 +111,8 @@ class ClassProxyMQTT {
      * @description Устанавливает обработчик на событие 'connected' клиента
     */ 
     OnConnected() {
-        H.Logger.Service.Log({service: 'MQTT', level: 'I', msg: `MQTT connected!`});
-        this.SetDMSubs();
+        H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT connected!`});
+        this.EmitEvents_dm_sub_sensorall();
     }
 
     /**
@@ -90,35 +121,6 @@ class ClassProxyMQTT {
     */ 
     OnError(_errMsg) {
         H.Logger.Service.Log({service: 'MQTT', level: 'E', msg: `${_errMsg}`});
-    }
-
-    /*Example: { sensor: { channel_id1 : topic_name1, channel_id2: topic_name2 } }; */
-    /**
-     * @method
-     * @description Выполняет подписку на указанные топики
-     */
-    SetDMSubs() {
-        if (typeof this._Subs.dm.actuator !== 'object') return false;
-        // сохраняется ассоциация ID - название топика
-        let actuator_topic_names = Object.keys(this._Subs.dm.actuator).map(_chId => this._Subs.dm.actuator[_chId]);
-        this._MQTT.subscribe(actuator_topic_names);   
-
-        H.Logger.Service.Log({service: 'MQTT', level: 'I', msg: `MQTT subscribed on topics ${actuator_topic_names}`});
-    }
-
-    /**
-     * @method 
-     * Удаление подписчиков из коллекции 
-     * @param {String} _serviceName
-     * @param {[String]} _serviceSubs
-     */
-    RemoveSubs(_serviceName, _serviceSubs) {
-        if (!this._Subs[_serviceName] ||
-            typeof _serviceSubs !== 'object') return false;
-        
-        _serviceSubs.forEach(chId => {
-            delete this._Subs[_serviceName][chId];
-        });
     }
 
     /**
@@ -145,6 +147,17 @@ class ClassProxyMQTT {
         }, 1/_freq*1000);
 
         return true;
+    }
+    /**
+     * @method
+     * @description Отправляет сообщение подписки на DM
+     */
+    EmitEvents_dm_sub_sensorall() {
+        let msg = {
+            metadata: { source: 'proxymqtt' },
+            com: 'dm-sub-sensorall'
+        }
+        Object.emit(msg.com, msg);
     }
 }
 exports = ClassProxyMQTT;

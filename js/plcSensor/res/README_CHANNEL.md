@@ -3,7 +3,7 @@
 # ClassChannel
 <div style = "color: #555">
     <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -21,6 +21,7 @@
 - <mark style="background-color: lightblue">_ValueBuffer</mark> - буффера фиксированной длины, в котором сохраняются необработанные показания датчика;
 - <mark style="background-color: lightblue">_DataUpdated</mark> - флаг указывающий на то что сохраненное ранее значение *_Value* уже не является актуальным;
 - <mark style="background-color: lightblue">_DataWasRead</mark> - флаг указывающий на то что последнее актуальное значение *Value* уже было считано и сохранено;
+- <mark style="background-color: lightblue">_Bypass</mark> - флаг, при взведении которого вх. значения будут становиться результирующими в обход мат. обработки;
 - <mark style="background-color: lightblue">_ChangeThreshold</mark> - порог изменения - процент, на который должно измениться Value чтобы SM считал его новым;
 - <mark style="background-color: lightblue">_Sensor</mark> - ссылка на основной объект датчика;
 - <mark style="background-color: lightblue">_ChNum</mark> - номер канала;
@@ -39,6 +40,7 @@
 - <mark style="background-color: lightblue">Suppression</mark> - возвращает объект *ClassSuppression*;
 - <mark style="background-color: lightblue">Transform</mark> - возвращает объект *ClassTransform*;
 - <mark style="background-color: lightblue">Alarms</mark> - возвращает объект *ClassAlarms* после его инициализации;
+- <mark style="background-color: lightblue">AvgCapacity</mark> - емкость буфера, в котором хранятся вх. значения; 
 - <mark style="background-color: lightblue">ID</mark> - возвращает идентификатор канала датчика;
 - <mark style="background-color: lightblue">ChangeThreshold</mark> - процент, на который должно измениться показание с датчика, чтобы SM считал его обновившимся;
 - <mark style="background-color: lightblue">Status</mark> - задает и возвращает текущий статус датчика (канала) в виде числового кода. 
@@ -51,10 +53,8 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">SetAvgCapacity(_cap)</mark> - устанавливает размер буффера, в котором хранятся сырые показания датчика;
 - <mark style="background-color: lightblue">EnableAlarms()</mark> - создает объект *_Alarms*;
 - <mark style="background-color: lightblue">ClearBuffer()</mark> - очищает буффер;
-- <mark style="background-color: lightblue">SetAvgCapacity(_cap)</mark> - устанавливает вместимость кольцевого буфера 
 - <mark style="background-color: lightblue">Start(_chNum, _period, _opts)</mark>
 - <mark style="background-color: lightblue">Stop(_chNum)</mark>
 - <mark style="background-color: lightblue">ChangeFreq(_chNum, _period)</mark>
@@ -78,7 +78,7 @@
 Если ранее был вызван метод *EnableAlarms()*, то при каждом обновлении буфера производится проверка зон измерения.
 
 <div align='left'>
-    <img src="./res/sensor-data-processing.png" alt="Image not found">
+    <img src="./sensor-data-processing.png" alt="Image not found">
 </div>
 
 </div>
@@ -86,6 +86,7 @@
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

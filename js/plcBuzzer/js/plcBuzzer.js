@@ -5,7 +5,7 @@ const proportion = (x, in_min, in_max, out_min, out_max) => {
 
 /**
  * @typedef TypeBuzzerStart
- * @property {Number} freq     - частота
+ * @property {Number} value    - уровень частоты
  * @property {Number} numRep   - количество повторений [1...n]
  * @property {Number} pulseDur - длительность звучания в ms [50<=x<infinity]
  * @property {Number} prop     - пропорция ЗВУК/ТИШИНА на одном периоде [0<x<=1]
@@ -34,14 +34,14 @@ class ClassBuzzer extends ClassActuator {
     InitTasks() {
         this._Channels[0].AddTask('PlaySound', (opts) => {
             //проверка и валидация аргументов 
-            ['freq', 'numRep', 'pulseDur', 'prop'].forEach(property => {
+            ['value', 'numRep', 'pulseDur', 'prop'].forEach(property => {
                 if (typeof opts[property] !== 'number' || opts[property] < 0) throw new Error('Invalid args');
             });
             opts.prop = E.clip(opts.prop, 0, 1); 
             opts.pulseDur = E.clip(opts.pulseDur, 0, 2147483647);  //ограничение длины импульса максимальным знчением, которое может быть передано в setTimeout
 
             /*-сформировать двойной звуковой сигнал */
-            const freq = opts.freq;
+            const value = opts.value;
             let Thi = opts.pulseDur; //длительность звукового сигнала
             let Tlo = Math.floor(opts.pulseDur*(1 - opts.prop)/opts.prop); //длительность паузы
             count = opts.numRep*2;                                     //количество полупериодов(!) звукового сигнала
@@ -54,7 +54,7 @@ class ClassBuzzer extends ClassActuator {
                         this.SetValue(0);                                           //выключить звук
                         this._Interval = setTimeout(beep_func, Tlo);          //взвести setTimeout
                     } else {
-                        this.SetValue(freq);                                     //включить звук
+                        this.SetValue(value);                                     //включить звук
                         this._Interval = setTimeout(beep_func, Thi);          //взвести setTimeout
                     }
                     beep_flag = !beep_flag;
@@ -63,18 +63,18 @@ class ClassBuzzer extends ClassActuator {
                 };
             };
 
-            this.SetValue(freq) //включить звуковой сигнал
+            this.SetValue(value) //включить звуковой сигнал
             this._Interval = setTimeout(beep_func, Thi);
         });
 
-        this._Channels[0].AddTask('BeepOnce', function(freq, dur) {
-            if (!Number.isInteger(dur) || dur < 0) throw new Error('Invalid args');
+        this._Channels[0].AddTask('BeepOnce', function(_value, _dur) {
+            if (!Number.isInteger(_dur) || _dur < 0) throw new Error('Invalid args');
 
-            this.SetValue(freq);
+            this.SetValue(_value);
             setTimeout(() => {
                 this.SetValue(0);
                 this.ResolveTask(0);
-            }, dur);
+            }, _dur);
         });    
 
         this._Channels[0].AddTask('BeepTwice', (_val, _dur) => {

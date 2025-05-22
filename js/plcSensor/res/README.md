@@ -62,7 +62,7 @@
 
 //Создание объекта класса
 //*VL610 - класс, который наследуется от ClassSensor (ClassSensor) *
-let vl6180_channels = DevicesManager.CreateDevice('00');
+let vl6180_channels = H.DeviceManager.Service.CreateDevice('vl');
 
 //Сохранение ссылок на каналы в переменные
 /* Далее все взаимодействие с датчиком выполняется через эти каналы */
@@ -128,7 +128,7 @@ setTimeout(() => {
 #### Смена единицы измерения температуры на ходу с помощью настройки линейной функции:
 ```js
 //Инициализация канала, измеряющего температуру в °C 
-let sht_channels = DevicesManager.CreateDevice('02');
+let sht_channels = H.DeviceManager.Service.CreateDevice('02');
 let tmprtCh = sht_channels[0];
 
 //Запуск и вывод показаний

@@ -17,9 +17,9 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с цифровыми кнопками в рамках фреймворка Horizon Automated. Обеспечивает мониторинг состояния кнопки и её основные события. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). Взаимодействие осуществляется через 0-й канал. 
+Модуль предназначен для работы с цифровыми кнопками в рамках фреймворка Horizon Automated. Обеспечивает мониторинг состояния кнопки и её основные события. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [plcSensor](../../plcSensor/res/README.md). Взаимодействие осуществляется через 0-й канал. 
 
-Функционал данного модуля позволяет применять кнопки в различных сценариях. При этом рекомендуем также ознакомиться с модулем [бистабильной кнопки](./README_BISTABLE.md) которая будут более удобна в некоторых сценариях. 
+Функционал данного модуля позволяет применять кнопки в различных сценариях. При этом рекомендуем также ознакомиться с модулем [бистабильной кнопки](../../plcBistableButton/res/README_BISTABLE.md) которая будут более удобна в некоторых сценариях. 
 
 </div>
 
@@ -46,6 +46,8 @@
 - <mark style="background-color: lightblue">release</mark> - кнопка отпущена;
 - <mark style="background-color: lightblue">click</mark> - собственно клик;
 - <mark style="background-color: lightblue">hold</mark> - удержание;
+
+В событии возвращается объект-состояние прерывания.
 </div>
 
 ### Возвращаемые данные
@@ -58,31 +60,28 @@
 <div style = "color: #555">
 
 ```js
-let btn = SensorManager.CreateDevice('10')[0];
+let btn = H.DeviceManager.Service.CreateDevice('btn')[0];
 btn.Start();
 
 let t1;
-btn.on('press', () => {
+btn.on('press', (e) => {
     print('pressed');
-    t1 = getTime();
 });
 
-btn.on('click', () => {
-    let t2 = getTime();
-    print(`released after ${(t2-t1).toFixed(2)}`);
-    t1 = t2;
+btn.on('click', (e) => {
+    print(`released after ${(e.time-e.lastTime).toFixed(2)}`);
 });
 // Теперь несколько раз зажмем кнопку на какое то время
 ```
 
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 #### Событие hold 
 ```js
-let btn = SensorManager.CreateDevice('btn')[0];
+let btn = H.DeviceManager.Service.CreateDevice('btn')[0];
 // Опциональная настройка времени (в сек.) за которое срабатывает удержание
 btn.Configure({ holdTime: 0.3 });
 btn.Start();
@@ -93,7 +92,7 @@ btn.on('hold',  () => { print('hold'); });
 
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-2.png'>
+    <img src='./example-2.png'>
 </div>
 
 </div>
@@ -103,4 +102,6 @@ btn.on('hold',  () => { print('hold'); });
 
 </div>
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>

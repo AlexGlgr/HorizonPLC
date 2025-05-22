@@ -17,7 +17,7 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с аналоговым сервоприводом в рамках фреймворка Horizon Automated. Разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). Количество каналов - 1. 
+Модуль предназначен для работы с аналоговым сервоприводом в рамках фреймворка Horizon Automated. Разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). Количество каналов - 1. 
 
 </div>
 
@@ -26,14 +26,14 @@
 
 Конструктор принимает данные из конфига.
 ```json
-"12": {
+"pot": {
     "pins": ["A3"],
     "name": "Potentiometer",
     "article": "02-501-0103-201-0001",
     "type": "sensor",
     "channelNames": ["position"],
     "quantityChannel": 1,
-    "modules": ["ModulePotentiometer.min.js"]
+    "modules": ["plcPotentiometer.min.js"]
 }
 ```
 </div>
@@ -54,7 +54,7 @@
 ### Возвращаемые данные
 <div style = "color: #555">
 Датчик предоставляет данные об позиции, в которой находится потенциометр. По-умолчанию датчик возвращает число от 0 до 1.
-Для градуировния показаний с рекомендуется скалировать их к желаемому к диапазону `pot_ch.DataRefine.SetTransformFunc(k, b)`; 
+Для градуировния показаний с рекомендуется скалировать их к желаемому к диапазону `pot_ch.Transform.SetLinearFunc(k, b)`; 
 При k=1, b=0 показания приводятся к диапазону  [0, 100] (с сохранением дробной части);
 При `k=1` и `b=0` выводятся изначальные показания потенциометра в диапазоне [0, 1].
 </div>
@@ -65,7 +65,7 @@
 
 ```js
 //Создание объекта класса
-let pot = SensorManager.CreateDevice('12')[0];
+let pot = H.DeviceManager.Service.CreateDevice('pot')[0];
 // Меняем диапазон на [0, 10]
 pot.Transform.SetLinearFunc(10, 0);
 // Запускаем опрос 
@@ -83,7 +83,7 @@ let interval = setInterval(() => {
 ```
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -91,6 +91,8 @@ let interval = setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

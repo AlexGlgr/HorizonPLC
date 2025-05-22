@@ -4,7 +4,7 @@
 
 <div style = "color: #555">
     <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -17,7 +17,7 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с датчиком VL6180 в рамках фреймворка Horizon Automated. Реализует функции датчика освещенности и расстояния. Соответственно количество измерительных каналов - 2. Модуль работает по протоколу I2C на частоте 400кГц, разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). 
+Модуль предназначен для работы с датчиком VL6180 в рамках фреймворка Horizon Automated. Реализует функции датчика освещенности и расстояния. Соответственно количество измерительных каналов - 2. Модуль работает по протоколу I2C на частоте 400кГц, разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). 
 
 Датчик VL6180 применяется в сценариях, где важно определение близкого приближения объектов, а не абсолютное измерение расстояния с высокой точностью. VL6180 использует технологию Time-of-Flight (ToF) для измерения расстояния, а также встроенный ALS (Ambient Light Sensor) для измерения освещенности.
 
@@ -29,21 +29,22 @@
 ## Конструктор
 <div style = "color: #555">
 
-Конструктор принимает объект типа [**SensorOptsType**](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md), который SensorManager формирует из конфигурации *device.conf*. Конфигурация для модуля имеет следующий вид:
+Конструктор принимает данные из конфига. Пример ниже:
 ```json
-"LightVL": 
-{
+"00": {
+    "name": "VL6180",
     "bus": "I2C11",
-    "name": "LightVL6180",
-    "article": "02-501-0105-201-0004",
+    "address": 0x29,
+    "article": "02-501-0102-201-0004",
     "type": "sensor",
     "channelNames": ["light", "range"],
     "quantityChannel": 2,
-    "busTypes": ["i2c"],
-    "manufacturingData": {},
-    "modules": ["plcLightVL6180.min.js"]
+    "modules": ["plcVL6180.min.js"]
 }
 ```
+- <mark style="background-color: lightblue">bus</mark> - объект класса I2C, возвращаемый диспетчером I2C шин - [I2Cbus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md);
+- <mark style="background-color: lightblue">address</mark> - адрес датчика на шине;
+
 </div>
 
 ### Поля
@@ -56,13 +57,13 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">Init()</mark> - проводит инициализацию датчика настройкой необходимых для его работы полей и регистров;
+- <mark style="background-color: lightblue">Init(_sensor_props)</mark> - проводит инициализацию датчика настройкой необходимых для его работы полей и регистров;
 - <mark style="background-color: lightblue">Configure()</mark> - конфигурирует работу датчика;
 - <mark style="background-color: lightblue">Start(_num_channel)</mark> - запускает циклический опрос определенного канала датчика со стандартной периодичностью;
 - <mark style="background-color: lightblue">Stop(_num_channel)</mark> - прекращает считывание значений с заданного канала;
 - <mark style="background-color: lightblue">PerformSingle(_num_channel)</mark> - запускает единичный замер с указанного канала;
 - <mark style="background-color: lightblue">UpdateValues()</mark> - считывает показания датчиков с регистров и приводит их к люксам и мм.
-- <mark style="background-color: lightblue">SetAddress(addr)</mark> - аппаратно устанавливает адресс датчика на шине и поле Address.
+- <mark style="background-color: lightblue">SetAddress(addr)</mark> - аппаратно устанавливает адрес датчика на шине и поле Address.
 </div>
 
 ### Возвращаемые данные
@@ -76,18 +77,23 @@
 
 ```js
 //Инициализация каналов датчика
-let vl6180 = H.DeviceManager.Service.CreateDevice("LightVL");
-const ch0 = vl6180[0];
-const ch1 = vl6180[1];
-vl6180.Start();
+let vl6180_channels = H.DeviceManager.Service.CreateDevice('vl');
+
+const ch0 = vl6180_channels[0];
+const ch1 = vl6180_channels[1];
+ch0.Start();
+ch1.Start();
 
 setInterval(() => {
-    H.Logger.Service.Log({service: 'VL6180', level: 'I', msg: `Light: ${(ch0.Value).toFixed(1)} Lux    Dist: ${(ch1.Value).toFixed(0)} mm`});
+    if (ch0.Status)
+        console.log((ch0.Value).toFixed(1) + "lux");
+    if (ch1.Status)
+        console.log((ch1.Value).toFixed(1) + "mm");
 }, 1000);
 ```
 Результат выполнения:
 <div align='center'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -95,12 +101,8 @@ setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
-- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
-- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
-- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
-- [ClassBaseI2CBus](https://github.com/Konkery/ModuleBaseI2CBus/blob/main/README.md)
-- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
-- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

@@ -17,7 +17,7 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с цифровыми и аналоговыми портами в рамках фреймворка Horizon Automated. Обеспечивает чтение порта. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). Не применяется в прикладном коде.
+Модуль предназначен для работы с цифровыми и аналоговыми портами в рамках фреймворка Horizon Automated. Обеспечивает чтение порта. Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). Не применяется в прикладном коде.
 
 Каждый i-й канал сенсора относится к i-му переданному в конфиге порту. 
 
@@ -32,13 +32,13 @@
 ```json
 "19": {
     "pins": ["P11", "P13", "A3", "A4"],
-    "name": "DigitalSensor",
+    "name": "PortSensor",
     "article": "",
     "type": "sensor",
-    "channelNames": ["digital"],
+    "channelNames": ["p11_di", "p13_di", "A3_ai", "A4_ai"],
     "typeInSignals": ["digital",  "digital", "analog", "analog"],   // Внимание: именно это поле определяет как модуль будет взаимодействовать с данными портами
     "quantityChannel": 4,
-    "modules": ["ModulePortSensor.min.js"]
+    "modules": ["plcPortSensor.min.js"]
 }
 
 ```
@@ -62,7 +62,7 @@
 <div style = "color: #555">
 
 ```js
-let s_ports = SensorManager.CreateDevice('20');
+let s_ports = H.DeviceManager.Service.CreateDevice('20');
 
 // Явное задание режима порта
 s_ports[3].Configure({ mode: 'analog' });
@@ -81,7 +81,7 @@ let interval = setInterval(() => {
 
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -91,4 +91,6 @@ let interval = setInterval(() => {
 
 </div>
 
+- <mark style="background-color: lightblue">[plcMQTTGW](../../plcMQTTGW/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>

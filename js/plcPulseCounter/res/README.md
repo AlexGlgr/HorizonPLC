@@ -4,7 +4,7 @@
 
 <div style = "color: #555">
     <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="./logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -19,7 +19,7 @@
 <div style = "color: #555">
 
 Модуль предназначен для мониторинга цифровых импульсов (фронта и/или спада сигнала) на портах.
-Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). 
+Модуль разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). 
 
 0-й канал отвечает за общий подсчет импульсов, 1-й - за кол-во импульсов/сек., 2-й - кол-во/мин. 
 
@@ -41,8 +41,7 @@
     "typeInSignal": "digital",
     "typeOutSignal": "digital",
     "quantityChannel": 1,
-    "busTypes": [],
-    "manufacturingData": {}
+    "modules": ["plcPulseCounter.min.js"]
 }
 ```
 
@@ -70,7 +69,7 @@
 <div style = "color: #555">
 
 ```js
-let pulseSensor = DevicesManager.CreateDevice('22');
+let pulseSensor = H.DeviceManager.Service.CreateDevice('22');
 let total = pulseSensor[0];
 let perSec = pulseSensor[1];
 
@@ -85,7 +84,7 @@ let a = setInterval(() => {
 
 Результат выполнения:
 <div align='center'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -93,6 +92,8 @@ let a = setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

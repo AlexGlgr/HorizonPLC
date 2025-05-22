@@ -41,8 +41,7 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">On(_val, _opts)</mark>
-- <mark style="background-color: lightblue">Off(_opts)</mark> 
+- <mark style="background-color: lightblue">SetValue(_val, _opts)</mark>
 - <mark style="background-color: lightblue">Configure(_opts)</mark>
 - <mark style="background-color: lightblue">Reset(_opts)</mark>
 - <mark style="background-color: lightblue">GetInfo(_opts)</mark>
@@ -61,8 +60,8 @@
 ### Зависимости
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">[ClassTask]()</mark>
-- <mark style="background-color: lightblue">[ClassAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)</mark>
+- <mark style="background-color: lightblue">[ClassTask](./README_TASK.md)</mark>
+- <mark style="background-color: lightblue">[ClassAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

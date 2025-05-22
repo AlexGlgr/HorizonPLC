@@ -31,7 +31,7 @@
 1. [R, G, B] массив. Например [255, 0, 0] - красный;
 2. 6-разрядная hex запись. Например, '#ff0000' - красный.
 
-Модуль разработан в соответствии с [архитектурой актуаторов](https://github.com/Konkery/ModuleActuator/blob/main/README.md), соответственно, *ClassRGBStrip* наследует и реализует является функционал *ClassActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
+Модуль разработан в соответствии с [архитектурой актуаторов](../../plcActuator/res/README.md), соответственно, *ClassRGBStrip* наследует и реализует является функционал *ClassMiddleActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
 
 </div>
 
@@ -40,19 +40,18 @@
 
 Конструктор принимает данные из конфига. Пример ниже:
 ```json
-"MatrixLED": 
-{
-    "pins": ["P3"],
-    "name": "MatrixWS2812",
+"23": {
+    "pins": ["D23"],
+    "name": "WS2812",
+    "length": 16,
     "article": "",
     "type": "actuator",
     "channelNames": ["color"],
     "quantityChannel": 1,
-    "busTypes": [],
-    "manufacturingData": {},
-    "modules": ["plcMatrixWS2812.min.js"]
+    "modules": ["plcWS2812.min.js"]
 }
 ```
+
 Для корректной работы модуля требуется указать в конфиге порт, на котором работает лента, а также количество светодиодов на ней. Порт обязан быть с аппаратной поддержкой SPI.
 
 </div>
@@ -68,7 +67,7 @@
 ### Методы
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">On(_chNum, _val, _opts)</mark> - устанавливает цвет и яркость одного либо всех пикселей ленты;
+- <mark style="background-color: lightblue">SetValue(_chNum, _val, _opts)</mark> - устанавливает цвет и яркость одного либо всех пикселей ленты;
 
 </div>
 
@@ -77,7 +76,7 @@
 <div style = "color: #555">
 
 ```js
-let strip = H.DeviceManager.Service.CreateDevice('MatrixLED')[0];
+let strip = H.DeviceManager.Service.CreateDevice('23')[0];
 // Выключение всех светодиодов
 strip.Off();        
 // Установка цвета для пикселей 0, 1, 2 в красный, зеленый и синий цвета, яркость 50%
@@ -110,7 +109,7 @@ setTimeout(() => {
 <div style = "color: #555">
 
 ```js
-let strip = H.DeviceManager.Service.CreateDevice('MatrixLED')[0];
+let strip = H.DeviceManager.Service.CreateDevice('22')[0];
 // Установка цвета для пикселей 0, 1, 2 в красный, зеленый и синий цвета, яркость 50%
 // Включение каждого светодиода выключает все остальные
 strip.SetValue(0.5, { ledNum: 0, color: [255, 0, 0], exclusive: true });
@@ -143,7 +142,7 @@ setTimeout(() => {
 <div style = "color: #555">
 
 ```js
-let strip = H.DeviceManager.Service..CreateDevice('MatrixLED')[0];
+let strip = H.DeviceManager.Service.CreateDevice('22')[0];
 
 strip.On(0.4, { color: [
     '#000000', '#ab4b6b', '#ff7e67', '#8b8e99', 
@@ -165,7 +164,7 @@ strip.On(0.4, { color: [
 <div style = "color: #555">
 
 ```js
-let strip = H.DeviceManager.Service..CreateDevice('MatrixLED')[0];
+let strip = H.DeviceManager.Service.CreateDevice('22')[0];
 // Установка всех пикселей в один случайно выбранный цвет, яркость 45%
 strip.SetValue(0.45, { color: 'random' });  
 ```
@@ -180,7 +179,7 @@ strip.SetValue(0.45, { color: 'random' });
 <div style = "color: #555">
 
 ```js
-let strip = H.DeviceManager.Service..CreateDevice('MatrixLED')[0];
+let strip = H.DeviceManager.Service.CreateDevice('22')[0];
 // Установка всех светодиодов в случайные цвета, яркость случайная
 setInterval(() => {
     strip.SetValue(Math.random(), { color: 'randomAll' });  
@@ -197,11 +196,8 @@ setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
-- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
-- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
-- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
-- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
-- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
+- <mark style="background-color: lightblue">[plcActuator](../../plcActuator/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

@@ -3,7 +3,7 @@
 # ModuleProxyMQTT
 <div style = "color: #555">
 <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -14,24 +14,19 @@
 <div style = "color: #555">
 
 Модуль ProxyMQTT предназначен для обеспечения обмена сообщениями между MQTT-брокером и некоторыми системными службами фреймворка Horizon Automated. 
-Представляет из себя не самостоятельное звено, а прокси-прослойку к объекту класса [ClassMQTTServer](https://github.com/Konkery/ModuleMQTTServer/blob/main/README.md) (далее - *MQTT*), которая управляет двунаправленным обменом данными между издателем и службой [DevicesManager](https://github.com/Konkery/ModuleDevicesManager/blob/main/README.md).
+Представляет из себя не самостоятельное звено, а прокси-прослойку к объекту класса [ClassMQTTServer](../../plcMQTTGW/res/README.md) (далее - *MQTT*), которая управляет двунаправленным обменом данными между издателем и службой [DevicesManager](../../plcDeviceManager/res/README.md).
 Обмен сообщениями со службой построен на событийной модели, а взаимодействие с *MQTT* происходит напрямую. 
 Собственно модуль выполняет две операции:
 - Перехватывает команды с брокера их маршрутизирует их системным службам;
-- Перехватывает сообщения от служб и перенаправляет их на *MQTT*.
+- Перехватывает сообщения от служб и перенаправляет их на брокер.
 
 Также ProxyMQTT позволяет регулировать поток сообщений, рассылая их пакеты согласно установленной частоте. Это необходимо для работы с брокером, на котором стоит ограничение на кол-во возможных обновлений каждого отдельного топика. Под пакетом подразумевается набор сообщений, каждое из которых предназначено для отдельного топика. 
 
 Ниже приведена диаграмма, отображающая роль модуля в цепочке MQTT-брокер - DevicesManager. 
 
 <div align='center'>
-    <img src='./res/proxyMQTT-arсhitecture.png'>
+    <img src='./proxyMQTT-arсhitecture.png'>
 </div>
-
-Дополнительная информация в документации следующих модулей:
-
-- <mark style="background-color: lightblue">[ModuleMQTTServer](https://github.com/Konkery/ModuleMQTTServer/blob/main/README.md)</mark>
-- <mark style="background-color: lightblue">[ModuleDevicesManager](https://github.com/Konkery/ModuleDevicesManager/blob/main/README.md)</mark>
 
 </div>
 
@@ -72,7 +67,11 @@ this._Proxy = new ClassProxyMQTT(this);
 - <mark style="background-color: lightblue">Send(msg)</mark> - отправляет на *MQTT* сообщение и название предназначенного для него топика;
 - <mark style="background-color: lightblue">AddSubs(_serviceName, _serviceSubs)</mark> - добавляет подписчиков на системные службы;
 - <mark style="background-color: lightblue">RemoveSubs(_serviceName, _serviceSubs)</mark> - удаляет подписчиков из коллекции *_Subs* по переданным ID;
-- <mark style="background-color: lightblue">OnSensorData(data)</mark> - обрабатывает событие *sensor-data* службы Sensor Manager; перенаправляет данные на *MQTT*; 
+- <mark style="background-color: lightblue">OnSensorData(data)</mark> - - обрабатывает данные, полученные от DeviceManager; перенаправляет данные на *MQTT*; 
+- <mark style="background-color: lightblue">OnPublish(pub)</mark> - обрабатывает событие 'publish' MQTT GW; формирует сообщение соответствующей службе; 
+- <mark style="background-color: lightblue">OnDisconnected()</mark> - обрабатывает событие 'disconnected' MQTT GW;
+- <mark style="background-color: lightblue">OnConnected()</mark> - обрабатывает событие 'connected' MQTT GW;
+- <mark style="background-color: lightblue">OnError(e)</mark> - обрабатывает событие 'error' MQTT GW;
 - <mark style="background-color: lightblue">SetPubMaxFreq(_freq)</mark> - устанавливает максимальную частоту отправки сообщений на *MQTT*.
 </div>
 
@@ -106,8 +105,8 @@ setTimeout( () => {
 ### Зависимости
 <div style = "color: #555">
 
-- <mark style="background-color: lightblue">[ClassMQTTServer](https://github.com/Konkery/ModuleMQTTServer/blob/main/README.md)</mark>
-- <mark style="background-color: lightblue">[ClassAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)</mark>
+- <mark style="background-color: lightblue">[plcMQTTGW](../../plcMQTTGW/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 
 </div>
 

@@ -1,4 +1,4 @@
-let s_ports = SensorManager.CreateDevice('20');
+let s_ports = H.DeviceManager.Service.CreateDevice('20');
 
 // Явное задание режима порта
 s_ports[0].Configure({mode: 'analog'});

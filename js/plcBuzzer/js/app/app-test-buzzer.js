@@ -1,6 +1,6 @@
-const bz = SensorManager.CreateDevice('bz')[0];
+const bz = H.DeviceManager.Service.CreateDevice('bz')[0];
 //Вызов одного пика через основной, универсальный таск 
-bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 })
+bz.RunTask('PlaySound', { value: 0.3, numRep: 1, prop: 0.5, pulseDur: 800 })
 .then(
     // Вызов пика через таск, принимающий в качестве аргументов k, пропорциональный частоте и длину импульса 
     () => bz.RunTask('BeepOnce', 0.5, 800)

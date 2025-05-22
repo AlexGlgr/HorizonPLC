@@ -1,4 +1,4 @@
-let btn = SensorManager.CreateDevice('100')[0]
+let btn = H.DeviceManager.Service.CreateDevice('btn')[0]
   .Configure({ debounce: 20, holdTime: 1.5 })  
   .Start();
 

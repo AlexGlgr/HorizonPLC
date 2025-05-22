@@ -1,4 +1,4 @@
-let pulseSensor = DevicesManager.CreateDevice('22');
+let pulseSensor = H.DeviceManager.Service.CreateDevice('22');
 let total = pulseSensor[0];
 let perSec = pulseSensor[1];
 

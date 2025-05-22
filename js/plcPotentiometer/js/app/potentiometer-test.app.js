@@ -1,7 +1,7 @@
 //Создание объекта класса
-let pot = SensorManager.CreateDevice('12')[0];
+let pot = H.DeviceManager.Service.CreateDevice('pot')[0];
 // Меняем диапазон на [0, 10]
-pot.Transform.SetTransformFunc(10, 0);
+pot.Transform.SetLinearFunc(10, 0);
 // Запускаем опрос 
 pot.Start();
 

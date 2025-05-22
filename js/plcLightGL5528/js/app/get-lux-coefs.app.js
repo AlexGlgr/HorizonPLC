@@ -11,17 +11,17 @@ let R1= 4500;
 let L1 = 20;
 
 // vl6180
-let vl_channels = SensorManager.CreateDevice('00');
+let vl_channels = H.DeviceManager.Service.CreateDevice('00');
 let light1 = vl_channels[0];
 light1.Start();
 
 // gl5528
-let gl = SensorManager.CreateDevice('15');
+let gl = H.DeviceManager.Service.CreateDevice('15');
 let light2 = gl[0];
 let resistance = gl[1];
 light2.Start(40);
-resistance.DataRefine.SetFilterFunc(average);
-resistance.SetFilterDepth(5);
+resistance.Filter.SetFunc(average);
+resistance.AvgCapacity = 5;
 
 let gamma;  
 let light;
