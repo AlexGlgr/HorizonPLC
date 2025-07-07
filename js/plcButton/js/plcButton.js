@@ -30,12 +30,12 @@ class ClassButton extends ClassSensor {
     OnSetWatch(_e) {
         if (_e.state == 1) {  // кнопка отпущена
             if (_e.time-_e.lastTime >= this._HoldTime)            // кнопка удерживалась дольше holdTime
-                this._Channels[0].emit('hold');         
+                this._Channels[0].emit('hold', _e);         
             else
-                this._Channels[0].emit('click');          // иначе клик обыкновенный
+                this._Channels[0].emit('click', _e);          // иначе клик обыкновенный
         } 
         else {
-            this._Channels[0].emit('press');
+            this._Channels[0].emit('press', _e);
         }
 
         this._Channels[0].Value = _e.state;

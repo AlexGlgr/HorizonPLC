@@ -3,7 +3,7 @@
 # ModuleProxyWS
 <div style = "color: #555">
 <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="./logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -14,14 +14,14 @@
 <div style = "color: #555">
 
 Модуль ProxyWS предназначен для обеспечения обмена сообщениями между системными службами фреймворка Horizon Automated и Websocket сервером. 
-Представляет из себя не самостоятельное звено, а прокси-прослойку к объекту класса [ClassWSServer](https://github.com/Konkery/ModuleWebSocketServer/blob/main/README.md) (далее - WSS), которая управляет двунаправленным обменом данными между WSS и службами *RouteREPL*, *Sensor* и т.д
+Представляет из себя не самостоятельное звено, а прокси-прослойку к объекту класса [ClassWSServer](../../plcWSServer/res/README.md) (далее - WSS), которая управляет двунаправленным обменом данными между WSS и службами *RouteREPL*, *Sensor* и т.д
 Обмен сообщениями со службой построен на событийной модели, а взаимодействие с *WSS* происходит напрямую. 
 Собственно модуль выполняет две операции:
-- Перехватывает сообщения от служб и "упаковывает" их в JSON-строку в соответствии с протоколом [LHP](https://github.com/Konkery/ModuleLHP/blob/main/README.md) (Light Horizon Protocol) и отправляет на *WSS*.  
+- Перехватывает сообщения от служб и "упаковывает" их в JSON-строку в соответствии с протоколом [LHP](../../plcLHP/res/README.md) (Light Horizon Protocol) и отправляет на *WSS*.  
 - Принимает JSON-строки от WSS, извлекает и маршрутизирует переданные команды. Перед извлечением команд идёт проверка целостности полученного сообщения: **ProxyWS** сверяет фактическую чексумму сообщения с чексуммой, переданной в JSON-пакете.
 
 <div align='center'>
-    <img src='./res/proxyWS-arсhitecture.png'>
+    <img src='./proxyWS-arсhitecture.png'>
 </div>
 
 </div>
@@ -49,12 +49,9 @@ this._Proxy = new ClassProxyWS(this);
 <div style = "color: #555">
 
 Модуль подписан на следующие события: 
-- <mark style="background-color: lightblue">repl-sub</mark> - новый подписчик на контент службы RouteREPL;
-- <mark style="background-color: lightblue">repl-read</mark> - сообщение от службы RouteREPL;
-- <mark style="background-color: lightblue">sensor-sub</mark> - новый подписчик на контент службы Sensor;
-- <mark style="background-color: lightblue">sensor-read</mark> - сообщение от службы Sensor;
-- <mark style="background-color: lightblue">process-sub</mark> - новый подписчик на контент службы Process.
-- <mark style="background-color: lightblue">process-read</mark> - сообщение от службы Process.
+- <mark style="background-color: lightblue">dm-sub-sensorall</mark> - команда подписки на DeviceManager;
+- <mark style="background-color: lightblue">proxyws-send</mark> - команда на отправку данных по ws.
+- <mark style="background-color: lightblue">all-data-raw-get</mark> - сообщение от DeviceManager о новом пакете данных.
 </div>
 
 ### Методы
@@ -63,9 +60,7 @@ this._Proxy = new ClassProxyWS(this);
 - <mark style="background-color: lightblue">Receive(_data, _key)</mark> - вызывается извне (со стороны *WSS*) для отправки команд;
 - <mark style="background-color: lightblue">Send(msg)</mark> - отправляет сообщение в виде JSON-строки в WS Server;
 - <mark style="background-color: lightblue">RemoveSub(key)</mark> - удаляет подписчика из коллекции *_SubID* по указанному ключу;
-- <mark style="background-color: lightblue">FormPackREPL(msg)</mark> - формирует объект из сообщения, полученного от службы REPL согласно LHP-протоколу;
-- <mark style="background-color: lightblue">FormPackSensor(msg)</mark> - формирует объект из сообщения, полученного от службы Sensor согласно LHP-протоколу;
-- <mark style="background-color: lightblue">FormPackProcess(msg)</mark> - формирует объект из сообщения, полученного от службы Process согласно LHP-протоколу.
+
 </div>
 
 ### Примеры
@@ -103,4 +98,6 @@ Receive(_data, _key) {
 
 ### Зависимости
 <div style = "color: #555"></div>
+
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>

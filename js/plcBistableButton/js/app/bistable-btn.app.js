@@ -1,4 +1,4 @@
-let btn = SensorManager.CreateDevice('18')[0];
+let btn = H.DeviceManager.Service.CreateDevice('18')[0];
 btn.Start();
 
 btn.on('enable', () => { print('on'); });

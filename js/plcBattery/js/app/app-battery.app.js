@@ -1,5 +1,5 @@
 // Создание объекта класса
-let battery = SensorManager.CreateDevice('14');
+let battery = H.DeviceManager.Service.CreateDevice('14');
 let charge = battery[0];
 let voltage = battery[1];
 charge.Start();

@@ -1,25 +1,3 @@
-require('ModuleAppMath').is();
-
-const ClassMiddleActuator = require('ModuleActuator');
-const ClassBuzzer = require('ModuleBuzzer');
-
-const act_props = ({
-    name: "Buzzer",
-    type: "actuator",
-    channelNames: ["freq"],
-    typeInSignals: ["analog"],
-    quantityChannel: 1,
-    busTypes: [],
-    manufacturingData: {
-        IDManufacturing: [
-            { "Adafruit": "4328435534" }
-        ],
-        IDsupplier: [
-            { "Adafruit": "4328435534" }
-        ],
-        HelpSens: "Buzzer"
-    }
-});
 // Пример 1: применение стандартных тасков баззера
 const bz = new ClassBuzzer(act_props, { pins: [P2] });
 const ch = bz.GetChannel(0);

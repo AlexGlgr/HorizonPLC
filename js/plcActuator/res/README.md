@@ -3,7 +3,7 @@
 # ModuleActuator
 <div style = "color: #555">
     <p align="center">
-    <img src="./res/logo.png" width="400" title="hover text">
+    <img src="./logo.png" width="400" title="hover text">
     </p>
 </div>
 
@@ -36,7 +36,7 @@
 Набор классов, обеспечивающих функционал датчика, можно условно поделить на следующие части: 
 - Основная:
     - ветка классов [ClassBaseActuator](./README_ANCESTOR.md) и [ClassActuator](./README_MIDDLE.md), хранящих в себе поля и методы, общие для всех актуаторов;
-    - класс [ClassChannelSensor](README_CHANNEL.md), служит интерфейсом для работы с отдельным каналом актуатора;
+    - класс [ClassChannelActuator](README_CHANNEL.md), служит интерфейсом для работы с отдельным каналом актуатора;
 - Сервисная: 
     - [ClassSuppression и ClassTransform](./README_DATA_REFINE.md) реализует математико-логический аппарат для обработки и корректировки данных с датчика;
     - [ClassAlarms](./README_ALARMS.md) добавляет поддержку зон измерения и алармов (оповещений/сигналов тревоги);  
@@ -55,7 +55,7 @@
 
 ```js
 //Инициализация 
-const bz = DevicesManager.CreateDevice('00')[0];
+const bz = H.DeviceManager.Service.CreateDevice('bz')[0];
 //Запуск работы зуммера с частотой 60% от максимальной
 bz.On(0.6);
 //Запуск с другой частотой через 1 сек

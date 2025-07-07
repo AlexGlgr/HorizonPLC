@@ -11,12 +11,12 @@ class ProxyWS {
     constructor(_wss) {
         this._WSS = _wss;
         this._SubID = {}; //{'MAS-1000': 'some-hash-key'} 
-        this._Subs = { sensor: {} }   
+        this._Subs = { sensor: {} };   
         // Пришло сообщение о подписке на dm
         this._SubDM = false;    
 
         /************************************* SUB EVENTS **********************************/
-        Object.on('dm-sub-sensorall', msg => {
+        Object.on('proxyws-sub-sensorall', _msg => {
             this._SubDM = true;
         });
 
@@ -44,7 +44,7 @@ class ProxyWS {
         } catch (e) {
             throw new err('Incorrect JSON data');
         }
-        let key = _key;
+        msg.metadata = { source: 'proxyws' };
         Object.emit(msg.com, msg);
     }
     /**

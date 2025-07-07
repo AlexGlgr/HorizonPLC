@@ -1,5 +1,5 @@
 // Для наглядности "посадим" на порты А0 и Р12 светодиоды 
-let a_ports = SensorManager.CreateDevice('21');
+let a_ports = H.DeviceManager.Service.CreateDevice('21');
 
 // Явное задание режима порта
 a_ports[0].Configure({ mode: 'af_output' });

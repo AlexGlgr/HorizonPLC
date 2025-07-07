@@ -1,5 +1,5 @@
-const ClassSensor   = require('plcSensor.min.js');
-const ClassActuator = require('plcActuator.min.js');
+const ClassSensor   = require('plcSensor');
+const ClassActuator = require('plcActuator');
 
 const POLLING_FREQ = 5;
 /**
@@ -26,8 +26,7 @@ class ClassDeviceManager {
         // запуск циклического опроса
         Object.on('dm-sub-sensorall', (_msg) => {
             // let freq = _msg.arg[0];
-            H.Logger.Service.Log({ service: 'DM', level: 'I',  msg: `dm-sub-sensorall` });
-            this.OnSubSensorall(_msg);
+            this.OnSubSensall();
             if (!this._Interval) this.StartPolling(POLLING_FREQ);
         });
         // его остановка
@@ -109,10 +108,10 @@ class ClassDeviceManager {
         let value = { sensor: [], actuator: [] };
         
         this.ActuatorChannels.forEach(_ch => {
-            value.sensor.push(`${_ch.Device._Article}-${_ch.ID}`);
+            value.sensor.push(`${_ch.Device._Article}-${ch.ID}`);
         });
         this.SensorChannels.forEach(_ch => {
-            value.actuator.push(`${_ch.Device._Article}-${_ch.ID}`);
+            value.actuator.push(`${_ch.Device._Article}-${ch.ID}`);
         });
         return value;
     }
@@ -138,7 +137,7 @@ class ClassDeviceManager {
                 else throw 'Unsupported bus signature.'
 
             } catch (e) {
-                H.Logger.Service.Log({ service: 'DM', level: 'E',  msg: `Failed to init bus ${busName}: ${e}` });
+                H.Logger.Log({ service: 'dm', level: 'E',  msg: `Failed to init bus ${busname}` });
             }
         }
     }  
@@ -235,7 +234,7 @@ class ClassDeviceManager {
         this.SendWS(msg);
     }
 
-    OnSubSensorall(_msg) {
+    OnSubSensall(_msg) {
         let source = _msg.metadata ? _msg.metadata.source ? _msg.metadata.source : undefined : undefined;
         if (!source) return;
         let msg = {

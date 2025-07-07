@@ -17,7 +17,7 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с аналоговым датчиком освещенности GL5528 в рамках фреймворка Horizon Automated. Разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md). Предоставляет 2 измерительных канала. 
+Модуль предназначен для работы с аналоговым датчиком освещенности GL5528 в рамках фреймворка Horizon Automated. Разработан в соответствии с нотацией архитектуры датчиков и является потомком класса [ClassSensor](../../plcSensor/res/README.md). Предоставляет 2 измерительных канала. 
 
 Датчик GL5528 представляет собой фоторезистор, сопротивление которого изменяется в зависимости от уровня освещенности. При увеличении освещенности сопротивление падает, что приводит к увеличению выходного напряжения. Этот аналоговый сигнал преобразуется значение сопротивления фоторезистора для 1-го канала и в значение освещенности для 0-го.
 
@@ -25,7 +25,7 @@
 
 GL5528 имеет следующие технические параметры: темновое сопротивление 1 МОм, сопротивление при освещенности 10 Люкс – 10-20 кОм, спектральная чувствительность в диапазоне 400-700 нм. Диапазон измерений составляет от 0 до 1000 Люкс.
 
-Датчик GL5528 крайне неточный и требует тщательной калибровки для получения достоверных результатов. Его показания могут значительно варьироваться в зависимости от условий эксплуатации. Изменение температуры окружающей среды может влиять на его сопротивление, что требует дополнительной компенсации. Показатели могут меняться со временем, что также требует периодической перекалибровки.
+Датчик GL5528 крайне неточный и требует тщательной калибровки для получения достоверных результатов. Его показания могут значительно варьироваться в зависимости от условий эксплуатации. Изменение температуры окружающей среды может влиять на его сопротивление, что требует дополнительной компенсации. Показатели могут меняться со временем, что также требует периодической калибровки.
 
 </div>
 
@@ -34,17 +34,15 @@ GL5528 имеет следующие технические параметры: 
 
 Конструктор принимает данные из конфига. Пример ниже:
 ```json
-"LightGL": {
+"gl": {
     "k": 32017200,
     "p": -1.5832,
     "pins": ["A3"],
-    "name": "LightGL5528",
+    "name": "GL5528",
     "article": "02-501-0105-201-0003",
     "type": "sensor",
-    "channelNames": ["light","resistance"],
+    "channelNames": ["light", "resistance"],
     "quantityChannel": 2,
-    "busTypes": [],
-    "manufacturingData": {},
     "modules": ["plcLightGL5528.min.js"]
 }
 ```
@@ -76,7 +74,7 @@ GL5528 имеет следующие технические параметры: 
 
 ```js
 //Создание объекта класса
-let gl5528 = H.DeviceManager.Service.CreateDevice('LightGL');
+let gl5528 = H.DeviceManager.Service.CreateDevice('gl');
 let light = gl5528[0];
 let r = gl5528[1];
 
@@ -86,12 +84,13 @@ light.Configure({ k: 32017200, p: -1.5832 });
 light.Start(50);
 
 let interval = setInterval(() => {
-    H.Logger.Service.Log({service: 'GL5528', level: 'I', msg: `Light: ${(light.Value).toFixed(1)} Lux    Res: ${(r.Value).toFixed(0)} Ohm`});
+    console.log(`Light value is ${(light.Value).toFixed(1)} Lux`);
+    console.log(`Resistance is ${(r.Value).toFixed(0)} Ohm`);
 }, 1000);
 ```
 Результат выполнения:
 <div align='left'>
-    <img src='./res/example-1.png'>
+    <img src='./example-1.png'>
 </div>
 
 </div>
@@ -99,11 +98,8 @@ let interval = setInterval(() => {
 ### Зависимости
 <div style = "color: #555">
 
-- [ClassSensor](https://github.com/Konkery/ModuleSensorArchitecture/blob/main/README.md)
-- [SensorManager](https://github.com/Konkery/ModuleSensorManager/blob/main/README.md)
-- [ModuleProcess](https://github.com/Konkery/ModuleProcess/blob/main/README.md)
-- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
-- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
 </div>
 
+- <mark style="background-color: lightblue">[plcSensor](../../plcSensor/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>

@@ -17,10 +17,10 @@
 ## Описание
 <div style = "color: #555">
 
-Модуль предназначен для работы с цифровыми и аналоговыми портами в рамках фреймворка Horizon Automated. Обеспечивает запись в порт. Модуль разработан в соответствии с нотацией архитектуры актуаторов и является потомком класса [ClassActuator](https://github.com/Konkery/ModuleActuatorArchitecture/blob/main/README.md). Не применяется в прикладном коде.
+Модуль предназначен для работы с цифровыми и аналоговыми портами в рамках фреймворка Horizon Automated. Обеспечивает запись в порт. Модуль разработан в соответствии с нотацией архитектуры актуаторов и является потомком класса [ClassActuator](../../plcActuator/res/README.md). Не применяется в прикладном коде.
 
-### ModuleDigitalActuator и ModuleAnalogActuator
-Технически ModuleActuatorPort реализует закладывает логику, относящуюся к актуатору как цифрового порта, так и аналогового. 
+### ModulePortActuator
+Технически модуль реализует закладывает логику, относящуюся к актуатору как цифрового порта, так и аналогового. 
 А метод взаимодействия с портом (pwm/цифра) определяется конфигом (см. [конструктор](./README.md#конструктор)).
 
 Каждый i-й канал сенсора относится к i-му переданному в конфиге порту. 
@@ -58,7 +58,7 @@
 
 ```js
 // Для наглядности "посадим" на порты А0 и Р12 светодиоды 
-let a_ports = SensorManager.CreateDevice('21');
+let a_ports = H.DeviceManager.Service.CreateDevice('21');
 
 // Явное задание режима порта
 a_ports[0].Configure({ mode: 'af_output' });
@@ -81,6 +81,8 @@ a_ports[1].SetValue(1);
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcActuator](../../plcActuator/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>

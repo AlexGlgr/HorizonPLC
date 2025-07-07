@@ -23,7 +23,7 @@
 - Включение пьезозуммера с заданной частотой;
 - Генерация различных звуковых паттернов и их проигрыш посредством выполнения тасков.
 
-Модуль разработан в соответствии с [архитектурой актуаторов](https://github.com/Konkery/ModuleActuator/blob/main/README.md), соответственно, *ClassBuzzer* наследует и реализует является функционал *ClassMiddleActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
+Модуль разработан в соответствии с [архитектурой актуаторов](../../plcActuator/res/README.md), соответственно, *ClassBuzzer* наследует и реализует является функционал *ClassActuator*, а прикладная работа с данным модулем выполняется через *ClassChannelActuator*, который обеспечивает унифицированный интерфейс.
 
 </div>
 
@@ -41,7 +41,7 @@
     "type": "actuator",
     "channelNames": ["freq"],
     "quantityChannel": 1,
-    "modules": ["ModuleBuzzer.min.js"]
+    "modules": ["plcBuzzer.min.js"]
 }
 ```
 
@@ -66,7 +66,7 @@
 
 ```js
 //Инициализация 
-const bz = SensorManager.CreateSensor('bz')[0];
+const bz = H.DeviceManager.Service.CreateSensor('bz')[0];
 //Запуск работы зуммера с частотой 60% от maxFreq
 bz.SetValue(0.6);
 //Запуск с другой частотой через 1 сек
@@ -86,7 +86,7 @@ setTimeout(() => {
 
 ```js
 //Вызов одного пика через основной, универсальный таск 
-bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 });  
+bz.RunTask('PlaySound', { value: 0.3, numRep: 1, prop: 0.5, pulseDur: 800 })
 .then(
     // Вызов пика через таск, принимающий в качестве аргументов k, пропорциональный частоте и длину импульса 
     () => bz.RunTask('BeepOnce', 0.5, 800)
@@ -105,8 +105,8 @@ bz.RunTask('PlaySound', { freq: 300, numRep: 1, prop: 0.5, pulseDur: 800 });
 
 ```js
 //Объявление элементарного таска, запускающего зуммер на 3 сек
-bz.AddTask('Beep3sec', (freq) => {
-    this.SetValue(freq);
+bz.AddTask('Beep3sec', (_val) => {
+    this.SetValue(_val);
     setTimeout(() => {
         this.SetValue(0);
         //Завершение выполнения таска
@@ -142,6 +142,8 @@ setTimeout(() => {
 ### Зависимости
 <div style = "color: #555">
 
+- <mark style="background-color: lightblue">[plcActuator](../../plcActuator/res/README.md)</mark>
+- <mark style="background-color: lightblue">[plcAppError](../../plcAppError/res/README.md)</mark>
 </div>
 
 </div>
