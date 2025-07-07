@@ -1,143 +1,217 @@
+const SOF = '<< <';
+const EOF = '>> >';
+const SON = '<<$<';
+const EON = '>>$>';
+
+function pipe(_fn, _dest, _opts) {
+    let offset = 0;
+    let l = require("Storage").read(_fn).length;
+    let interval = setInterval(() => {
+        // let str = require("Storage").read(_fn, offset, _opts.chunkSize);
+        if (!_dest.conn || offset >= l /*!str.length*/) {
+            clearInterval(interval);
+            if (_opts.complete) _opts.complete();
+            if (_opts.end && _dest) _dest.end();
+            return;
+        }
+        _dest.write(require("Storage").read(_fn, offset, _opts.chunkSize));
+        offset += _opts.chunkSize;   
+        // delete str;
+    }, 50);
+}
 /**
  * @class
- * Класс реализует перехват ввода и вывода из консоли, включая в этот процесс внешние источники. 
- * Прием сообщений происходит по возникновению события 'repl-write'.
- * Отзеркаливание и передача данных из REPL происходит по событию ''repl-read.  
+ * Класс предоставляет возможность удаленного подключения к консоли по TCP-соединению.
  */
 class ClassRouteREPL {
-    constructor() {                         
-        this._InBuffer = '';
-        this._DefConsole = eval(E.getConsole()); // eval позволяет хранить инстанцированный объект UART шины. Это необходимо для работы с его функционалом из класса Route 
-        this._IncrVal = 0;
-        this._MasterID = 'EWI';     
-        this._IsOn = false;     
+    constructor(_opts) {
+        _opts = _opts || {};
+        this._DefConsole = eval(E.getConsole()); // eval позволяет хранить инициализированный объект UART шины. Это необходимо для работы с его функционалом из класса Route   
+        this._IsOn = false;
         this._Name = 'RouteREPL';
-
-        Object.on('repl-sub', () => {
-            if (!this._IsOn) this.RouteOn();
-        });
+        this._ReconnectTry = 0;
+        this._Port = _opts.port || 23;
+        this._Sending = false;
+        this.isREPLConnected();
+        // авто запуск роутинга после полного старта PLC
+        Object.on('complete', this.RouteOn.bind(this));
     }
-    /**
-     * Команда, по которой RouteREPL переназначает Master-устройство
-     * @returns {Number}
+    /** 
+     * @getter 
+     * Возвращает тип текущего подключения к консоли: NONE, USB или REMOTE
      */
-    get NEW_MASTER_COMMAND() { return '@@C_M@@'; }
-    /**
-     * Автоикрементирующийся индекс для входящих и исходящих сообщений
-     * @returns {Number}
-     */
-    get IncrID() { return ++this._IncrVal; }
-    /**
-     * @method
-     * Метод включает обработку событий "repl-cm", "repl-write",
-     * которые осуществляют обмен данными между RoutREPL и внешней средой,
-     * "repl-cm" который устанавливает новое значение мастера
-     */
-    InitEvents() {       
-        Object.on('repl-write', (commands, id) => {
-            if (id === this._MasterID) {
-                commands.forEach(command => {
-                    this.Receive(`${command}\r`);
-                });
-            }
-        });
-
-        Object.on('repl-cm', id => this.ChangeMaster(id));
+    get ConsoleType() {
+        return this._IsOn ? 'Telnet' : E.isUSBConnected() ? 'USB' : 'NONE';
     }
     /**
      * @method
-     * Обработчик события, вызываемого по поступлению данных из REPL на LoopbackB 
-     * @param {String} data 
-     */
-    LoopbackBHandler(data) {
-        this._DefConsole.write(' ' + data);
-        Object.emit('repl-read', data);
-    }
-    /**
-     * @method
-     * Обработчик события, вызываемого по поступлению данных со стандартной консоли
-     */
-    DefConsoleHandler(data) {
-        this._DefConsole.write(data); 
-        this._InBuffer += data;             //заполнение буффера введеными символами
-        if (data === '\r') {
-            let command = this._InBuffer;
-            this._InBuffer = '';
-
-            if (this._MasterID === 'EWI') this.Receive(command);  //проверка на то что была введена команда смены мастера
-            
-            else if (command.indexOf(this.NEW_MASTER_COMMAND) !== -1) {
-                this.ChangeMaster('EWI');
-            }
-        }
-    }
-    /**
-     * @method
-     * Перехват консоли, настройка ивентов для обмена сообщениями между REPL, EWI и внешними устройствами
+     * Запуск TCP-сервера
+     * Перехват консоли при подключении клиента. Объединение потоков с консоли на сокет и обратно.
      */
     RouteOn() {
-        E.setConsole(LoopbackA, { force: true });   //Перехватываем консоль
+        try {
+            this._Server = require('net').createServer(_socket => {
+                // завершение предыдущего подключения
+                if (this._Socket) this._Socket.end();
+                this._Socket = _socket;
+                _socket.on('close', () => {
+                    this._Socket = null;
+                    setTimeout(() => {
+                        // возврат стандартной консоли если не появился новый сокет
+                        if (!this._Socket) this.RouteOff();
+                    }, 50);
+                });
 
-        this.InitEvents();
+                _socket.pipe(LoopbackB);
+                LoopbackB.pipe(this._Socket);
 
-        LoopbackB.on('data', data => {              //настраиваем обработку данных, поступающих с REPL
-            this.LoopbackBHandler(data);
-        });
-
-        this._DefConsole.on('data', data => {       //настраиваем обработку данных, поступающих с консоли
-            this.DefConsoleHandler(data);
-        });
+                E.setConsole(LoopbackA, { force: false });   //Перехватываем консоль
+            });
+            this._Server.listen(this._Port);
+        } catch (e) {
+            H.Logger.Service.Log({ service: 'RouteREPL', level: 'I', msg: e });
+            if (++this._ReconnectTry < 3) {
+                this.RouteOn();
+            } else {
+                this.RouteOff();
+                this._ReconnectTry = 0;
+            }
+        }
 
         this._IsOn = true;
     }
     /**
      * @method
      * Через этот метод RouteREPL получает команду к непосредственно выполнению.
-     * @param {String} command - команда, которая передается в REPL
+     * @param {String} _stdin - команда, которая передается в REPL
      * @returns 
      */
-    Receive(command) {
-        if (!this._IsOn) return false; 
-        Object.emit('repl-read', command);  //"отзеркаливание" входного сообщения
-        // TODO: продумать необходмимо ли дополнительно обрамлять отзеркаливаемое сообщение
-        LoopbackB.write(command);
-        return true;
+    Receive(_stdin) {
+        LoopbackB.write(_stdin);
+    }
+
+    isREPLConnected() {
+        Process._HaveConsole = (this._IsOn || USB.isConnected() || E.isUSBConnected());
     }
     /**
      * @method
-     * Метод, который меняет текущего мастера
-     * @param {String} id - идентификатор нового мастера
+     * @description Загружает файл в хранилище
+     * @param {string} _fileName 
+     * @returns 
      */
-    ChangeMaster(id) {
-        this._MasterID = id;
-        this._DefConsole.write('repl-read', this.ToMsgPattern(`Info>> New MasterREPL, ID: ${this._MasterID}`));  //TODO: проверить насколько этот формат отправки сообщения соответствует общей методолгии
+    UploadFile(_fileName, _fileSize) {
+        if (this._Sending) return;
+        return new Promise((res, rej) => {
+            // блокировка консоли чтобы данные с сокета не могли попасть в файл
+            E.setConsole(null);
+            let offset = 0;
+            this._Socket.removeAllListeners('data');
+            /**
+             * @function
+             * @description Обработчик сокета для чтения данных 
+             * @param {string} _data 
+             */
+            let socketHandler = _data => {
+                let sof = _data.indexOf(SOF);    // начало файла
+                let eof = _data.indexOf(EOF);    // конец файла
+                _data = _data.slice(sof != -1 ? sof + SOF.length : 0, eof == -1 ? _data.length : eof);
+
+                require('Storage').write(_fileName, _data, offset, _fileSize);
+                // чтение файла завершено
+                if (eof > -1) {
+                    this._Socket.removeListener('data', socketHandler);
+                    E.setConsole(LoopbackA);
+                    H.Logger.Service.Log({ service: 'Repl', level: 'I', msg: `Uploaded new file over TCP: ${_fileName} with ${_fileName} bytes ` });
+                    res();
+                }
+                offset += _data.length;
+            }
+            this._Socket.prependListener('data', socketHandler);
+        });
     }
     /**
      * @method 
      * Возвращает работу консоли в состояние по умолчанию (как при запуске Espruino IDE). 
      * Рассчитан на применение сугубо в целях отладки.
      */
-    SetOff() {
+    RouteOff() {
         E.setConsole(this._DefConsole, { force: true });
+        if (this._Socket) this._Socket.end();
         this._IsOn = false;
     }
     /**
      * @method
-     * Формирует выходное сообщение
-     * @param {String} string - Текст сообщения
-     * @param {String} [id] - ID отправителя
-     * @returns {String}
+     * @returns Возвращает список файлов в хранилище
      */
-    ToMsgPattern(str, id) {
-        // TODO: код ниже задокументирован до принятия решения касательно форматирования исходящих сообщений
-        // if (id) return `${this.IncrID} <${id}> ${str}}`;
-
-        // return `${this.IncrID} ${str}`;
-
-        return str;
+    GetFileList() {
+        return require('Storage').list(undefined, { sf: false });
     }
-    isREPLConnected(_flag) {
-        return _flag;
+    /**
+     * @method
+     * @description Отправляет на сокет список файлов
+     */
+    SendFileList() {
+        E.setConsole(null);
+        this._Socket.write(`${SOF}${this.GetFileList().join(', ')}${EOF}`);
+        setTimeout(() => {
+            this.RouteOff();
+        }, 250);
+    }
+    /**
+     * @method
+     * @param {[string]|string} _args - список файлов которые необходимо отправить 
+     * @returns {Promise}
+     */
+    SendFiles(_args) {
+        // указание отправить все доступные файлы
+        if (_args == '*')
+            _args = this.GetFileList().filter(_fn => _fn != 'plcRouteREPL.min.js');
+        // если получен массив, то поочередно выполняется отправка указанных файлов
+        if (Array.isArray(_args) && _args.length > 0) {
+            // создаём цепочку промисов, чтобы отправить файлы последовательно
+            return _args.reduce((promiseChain, fileName) => {
+                return promiseChain.then(() => this.SendFile(fileName));
+            }, Promise.resolve()).then(this.RouteOff); // начальная цепочка - resolved Promise
+        }
+    }
+    /**
+     * @method
+     * @description Записать файл в сокет
+     * @param {string} _fileName 
+     * @returns {Promise}
+     */
+    SendFile(_fileName) {
+        return new Promise((res, rej) => {
+            if (!this._Socket) rej();
+            // блокировка консоли
+            E.setConsole(null);
+            this._Socket.removeAllListeners('data');
+            let file;
+            try {
+                file = require("Storage").read(_fileName);
+                if (!file) throw new Error(`Failed to read ${_fileName}`);
+            } catch (e) {
+                H.Logger.Service.Log({ service: this._Name, level: 'E', msg: `Error while sending ${_fileName} file via TCP: ${e.message}` });
+                rej();
+                return;
+            }
+            this._Sending = true;
+            setTimeout(() => {
+                this._Socket.write(`${SON}${JSON.stringify({ fn: _fileName })}${EON}`);
+                this._Socket.write(SOF);
+                E.pipe(file, this._Socket, {
+                    end: false,
+                    chunkSize: 64,
+                    complete: () => {
+                        this._Socket.write(EOF);
+                        this._Sending = false;
+                        // E.setConsole(LoopbackA, { force: false });
+                        // H.Logger.Service.Log({ service: 'Repl', level: 'I', msg: `Sent file over TCP: ${_fileName} `});
+                        setTimeout(res, 500);
+                    }
+                });
+            }, 250);
+        });
     }
 }
 exports = ClassRouteREPL;

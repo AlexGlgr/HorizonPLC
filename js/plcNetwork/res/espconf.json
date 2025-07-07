@@ -1,0 +1,21 @@
+{
+	"ESP": {
+		"restore": 1,
+		"stationMode": 1,
+		"country": {
+			"index": "RU",
+			"startchannel": 1,
+			"maxchannels": 13
+		},
+		"protocol": 3,
+		"autoConnect" : 1,
+		"reConnect": {
+			"interval" : 5,
+			"retries": 0
+		},
+		"accessPoint": {
+			"ssid": "hubc445",
+			"pass": "ChangeMe123"
+		}
+	}
+}

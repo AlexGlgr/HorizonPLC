@@ -51,7 +51,8 @@
 - <mark style="background-color: lightblue">_Bus</mark> - шина для работы с периферийным чипом;
 - <mark style="background-color: lightblue">_Ssid</mark> - ssid сети, к которой осуществляется подключение;
 - <mark style="background-color: lightblue">_Scan</mark> - массив объектов сетей, найденных во время сканирования;
-- <mark style="background-color: lightblue">_Ip</mark> - ip-адрес сети, к которой осуществляется подключениею.
+- <mark style="background-color: lightblue">_Ip</mark> - ip-адрес сети, к которой осуществляется подключениею;
+- <mark style="background-color: lightblue">_BaseModule</mark> - имя базового модуля-библиотеки. Объект указанного класса будет помещён в поле _Core.
 </div>
 
 ### Методы
@@ -106,11 +107,38 @@ Wifi, либо Ethernet.
 	}
 }
 ```
+Также в обновлённой версии для перенастройки чипа ESP8266 требуется файл netsetup.json, который содржит следующие поля:
+```json
+{
+	"ESP": {
+		"restore":0,					// Главный флаг, 1 означает перенастройку чипа при запуске фреймвока, скидывается в 0 автоматически
+		"stationMode":1,				// режим работы станции - клиент или источник
+		"country": {					// настройки страны
+			"index":"RU",				// индекс страны
+			"startchannel":1,			// номер первого вещательного канала
+			"maxchannels":13			// общее количество вещательных каналов
+		},
+		"protocol":3,					// версия протокола WiFi (b/g/n)
+		"autoConnect":1,				// флаг автоподключения
+		"reConnect": {					// настройки переподключения
+			"interval":5,				// интервал между попытками в секундах (0 - выключено)
+			"retries":0					// количество попыток (0 - бесконечно)
+		},
+		"accessPoint": {				// характеристики точки доступа, к которой будет осуществлено автоматическое подключение и попытки переподключений
+			"ssid":"ssid_name",	
+			"pass":"password123"
+		}
+	}
+}
+```
 - <mark style="background-color: lightblue">WifiSequence(nc, callback)</mark> - метод запуска подключения к сети по Wifi;
 - <mark style="background-color: lightblue">EtherSequence(nc, bus, callback)</mark> - метод запуска подключения к сети по Ethernet;
+- <mark style="background-color: lightblue">EventsHandling()</mark> - в методе осуществляется подписка к важным событиям, приходящим с контроллера;
+- <mark style="background-color: lightblue">Restore(nc, callback)</mark> - метод через цепь промисов выполняет перенастройку чипа esp8266 по конфигурации netsetup.json;
 - <mark style="background-color: lightblue">GetAPCreds(nc, callback)</mark> - метод определяет к какой точке доступа осуществить подключение, ориентируясь на конфигурацю;
 - <mark style="background-color: lightblue">Connect(pass, callback)</mark> - метод непосредственного подключения к сети по Wifi;
 - <mark style="background-color: lightblue">SetStatic(nc, callback)</mark> - метод установки статического IP-адреса при подключении по Wifi;
+- <mark style="background-color: lightblue">Status()</mark> - возвращает текущее состояние открытых сокетов;
 - <mark style="background-color: lightblue">GetNetPassword(_aps)</mark> - находит в конфигурации пароль, соответствующей выбранной точке доступа.
 </div>
 

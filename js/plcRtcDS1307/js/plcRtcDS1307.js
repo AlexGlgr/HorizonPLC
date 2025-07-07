@@ -53,21 +53,24 @@ class ClassDS1307 extends ClassSensor {
     SetTime(_date) {
         /*проверить переданные аргументы на валидность*/
 		let newDate;
+		print(typeof _date);
 		if (typeof _date === 'string' &&
 			(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(str))) {
 			newDate = new Date(_date);
+			print(typeof newDate);
 			if (!(newDate instanceof Date)) {
 				throw new err(ClassDS1307.ERROR_MSG_ARG_VALUE,
 					ClassDS1307.ERROR_CODE_ARG_VALUE);
 				}
 		}
-		else if (_date instanceof Date) {
+		/*else if (_date instanceof Date) {
 			newDate = _date;
 		}
 		else {
 			throw new err(ClassDS1307.ERROR_MSG_ARG_VALUE,
 				ClassDS1307.ERROR_CODE_ARG_VALUE);
-		}
+		}*/
+		newDate = _date;
 		/*проверить, что дата поддерживается модулем*/
 		let year=newDate.getFullYear();
 		/*нормализовать аргументы*/

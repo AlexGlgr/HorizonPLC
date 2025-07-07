@@ -210,6 +210,24 @@ class ClassPowerINA219 extends ClassSensor {
     }
     /**
      * @method
+     * Запускает сбор данных с датчика и передачи их в каналы
+     * @param {Number} _period          - частота опроса (минимум 20 мс)
+     * @param {Number} _num_channel     - номер канала
+     */
+    Start(_num_channel, _period) {
+        this._Channels[_num_channel].Status = 1;
+        if (!this._Interval) {          //если в данный момент не ведется ни одного опроса
+            let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period : this._MinPeriod;
+            this._Interval = setInterval(() => {
+                if (this._Channels[0].Status) this._Channels[0].Value = this._Sensor.ReadShuntVoltageRaw() * 0.00001;
+                if (this._Channels[1].Status) this._Channels[1].Value = this._Sensor.ReadBusVoltageRaw() * 0.004;
+                if (this._Channels[2].Status) this._Channels[2].Value = this._Sensor.ReadCurrentRaw() * this._Config.currentLSB;
+                if (this._Channels[3].Status) this._Channels[3].Value = this._Sensor.ReadPowerRaw() * this._Config.currentLSB * 20;
+            }, period);
+        }
+    }
+    /**
+     * @method
      * Метод для калибровки датчика. Изменяет максимальное значение напряжения и сопротивление на шунте
      * @param {Number} _num_channel     - номер канала датчика
      * @param {Object} _clb             - объект с конфигурацией для калибровки
@@ -284,24 +302,6 @@ class ClassPowerINA219 extends ClassSensor {
                 this._Sensor.ConfigureMode(_cfg.mode);
                 this._Config.mode = _cfg.mode;
             }
-        }
-    }
-    /**
-     * @method
-     * Запускает сбор данных с датчика и передачи их в каналы
-     * @param {Number} _period          - частота опроса (минимум 20 мс)
-     * @param {Number} _num_channel     - номер канала
-     */
-    Start(_num_channel, _period) {
-        this._Channels[_num_channel].Status = 1;
-        if (!this._Interval) {          //если в данный момент не ведется ни одного опроса
-            let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period : this._MinPeriod;
-            this._Interval = setInterval(() => {
-                if (this._Channels[0].Status) this._Channels[0].Value = this._Sensor.ReadShuntVoltageRaw() * 0.00001;
-                if (this._Channels[1].Status) this._Channels[1].Value = this._Sensor.ReadBusVoltageRaw() * 0.004;
-                if (this._Channels[2].Status) this._Channels[2].Value = this._Sensor.ReadCurrentRaw() * this._Config.currentLSB;
-                if (this._Channels[3].Status) this._Channels[3].Value = this._Sensor.ReadPowerRaw() * this._Config.currentLSB * 20;
-            }, period);
         }
     }
     /**

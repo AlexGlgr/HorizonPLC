@@ -1,6 +1,6 @@
 <div style = "font-family: 'Open Sans', sans-serif; font-size: 16px">
 
-# ModuleProcess
+# plcProcess
 <p align="center">
   <img src="./res/logo.png" width="400" title="hover text">
 </p>
@@ -13,18 +13,20 @@
 # Описание
 <div style = "color: #555">
 
-Модуль предназначен для инициализации платформы, загрузки модулей, необходимых для функционирования системы, подключению к сети и инициализация часов. Запуск модуля осущетвляется при включении платформы автоматически. Такое поведение обеспечено особенностью среды Espruino: js-код в  файле с именем *.boot0*, находящимся во flash-памяти платформы, будет выполнен автоматически при запуске. Такеж для инициализации и работы с платформой модулю взаимодействует с тремя конфигурацонными файлами. Файл *init.conf* содержит имя-идентификатор платформы, часовой пояс по-умолчанию и имена файлов базовых модулей, запуск которых осуществляется Process. **Без этого файла система не запуститься!**. Файл *device.conf* содержит информацию о датчиках и актуаторах, отсортированную по запускаемым пользовательским программам. Модуль взаимодействует с этим файлом по запросу SensorManager, но без этого конфигурационного файла **система не запустится!**. Файл *network.conf* содержит конфигурацию сетевого взаимодействия, например список сетей, к которым осуществлять автоматическое подключение. Без этого файла система запустится, но автоматического подключения к сети WiFi осуществлено не будет. Модуль имеет следующие архитектурные решения:
+Модуль предназначен для инициализации платформы, загрузки модулей, необходимых для функционирования системы, подключению к сети и инициализация часов. Запуск модуля осущетвляется при включении платформы автоматически. Такое поведение обеспечено особенностью среды Espruino: js-код в  файле с именем *.boot0*, находящимся во flash-памяти платформы, будет выполнен автоматически при запуске. Такеж для инициализации и работы с платформой модулю взаимодействует с тремя конфигурацонными файлами. Файл *init.json* содержит имя-идентификатор платформы и имена файлов базовых модулей, запуск которых осуществляется службой plcProcess. **Без этого файла система не запуститься!**. Файл *devices.json* содержит информацию о датчиках и актуаторах, отсортированную по запускаемым пользовательским программам. Модуль взаимодействует с этим файлом по запросу DeviceManager, но без этого конфигурационного файла **система не запустится!**. Файлы *network.json* и *netsetup.json* содержат сетевые конфигурации, например список сетей, к которым осуществлять автоматическое подключение. Без этих файлов система запустится, но автоматического подключения к сети WiFi осуществлено будет только, если чип был предварительно настроен. Модуль имеет следующие архитектурные решения:
 - реализует паттерн синглтон.
 </div>
 
-# Конфигурационные json файлы
+# Конфигурационные файлы json
 <div style = "color: #555">
 
 Для корректного функционирования фреймворка, во Flash-память должны быть загружены следующие конфигурационные файлы. При отсутствии некоторых из них фреймворк не будет запускаться:
 - <mark style="background-color: lightblue">init.json</mark> - базовая конфигурация PLC, содержащая ключевую информацию для работы системы. Является обязательным файлом;
 - <mark style="background-color: lightblue">device.json</mark> - файл, содержащий конфигурации подключенных к PLC датчикам и актуатором, а также софтверных шин, которые будут инициализированны при запуске. Является обязательным файлом;
-- <mark style="background-color: lightblue">services.json</mark> - файл, содержащий конфигурации основных модулей и служб фреймворка. Является обязательным файлом;;
+- <mark style="background-color: lightblue">services.json</mark> - файл, содержащий конфигурации основных модулей и служб фреймворка. Является обязательным файлом;
+- <mark style="background-color: lightblue">alarms.json</mark> - файл, содержащий инструкции для светошумовой идентификации на реакцию возникновения указанного события;
 - <mark style="background-color: lightblue">network.json</mark> - файл, содержащий конфигурации подключения к сети. Не является обязательным файлом. Подкючение к сети будет пропущено при отсутсвии данного файла;
+- <mark style="background-color: lightblue">netsetup.json</mark> - файл, содержащий конфигурации для автоматического подключения к сети при использовании чипа ESP8266. Содержит внутри себя флаг, который, если взведён, при запуске просигнализирует переписать данные во флэш память чипа, включая SSID и пароль сети, к которой осуществляется автоматическое подключение и переподключение в случае потери соединения. Не является обязательным файлом. Подкючение к сети будет пропущено при отсутсвии данного файла;
 - <mark style="background-color: lightblue">ports.json</mark> - файл, содержащий правила настройки режимов пинов при старте системы. Не является обязательным файлом, настройка режимов портов будет пропущена при отсутсвии данного файла.
 </div>
 
@@ -61,7 +63,7 @@
       "article": "02-501-0704-201-0002",
       "type": "actuator",
       "quantityChannel": 1,
-      "modules": ["ModuleAnalogLed.min.js"]
+      "modules": ["plcAnalogLed.min.js"]
     },
     "SysBuzzer": {
       "pins": ["A1"],
@@ -69,7 +71,7 @@
       "article": "02-501-0204-000-0001",
       "type": "actuator",
       "quantityChannel": 1,
-      "modules": ["ModuleBuzzer.min.js"]
+      "modules": ["plcBuzzer.min.js"]
     }
   },
   "app1": {
@@ -83,7 +85,7 @@
       "type": "sensor",
       "channelNames": ["light","resistance"],
       "quantityChannel": 2,
-      "modules": ["ModuleLightGL5528.min.js"]
+      "modules": ["plcLightGL5528.min.js"]
     },
     "GasSensor": {
       "pins": [],
@@ -94,7 +96,7 @@
       "channelNames": ["CO2", "TVOC"],
       "quantityChannel": 2,
       "busTypes": ["i2c"],
-      "modules": ["ModuleCCS811.min.js"]
+      "modules": ["plcCCS811.min.js"]
     }
   }
 }
@@ -111,7 +113,7 @@
 - <mark style="background-color: lightblue">initOrder</mark> - порядковый номер службы при запуске фреймворка. Перед непосредственным запуском служб фреймворк отсортирует их по значению этого поля в порядке возрастания;
 - <mark style="background-color: lightblue">advancedOptions</mark> - дополнительные опции для запуска службы. Поле может быть пустым, содержание зависит от конкретной службы;
 - <mark style="background-color: lightblue">dependency</mark> - имя .js файла во Flash памяти PLC, реализующего данную службу;
-- <mark style="background-color: lightblue">description</mark> - Текстовое описание службы.
+- <mark style="background-color: lightblue">description</mark> - текстовое описание службы.
 
 Пример файла services.json, содержащий неполный список служб:
 ```json
@@ -125,7 +127,7 @@
         "server" : "192.168.50.251",
         "port" : 5142
     }, 
-    "Dependency" : ["ModuleLogger.min.js"], 
+    "Dependency" : ["plcLogger.min.js"], 
     "Description" : "Logger desription"
   },
   "I2Cbus" : {
@@ -134,7 +136,7 @@
     "Importance" : "Auxilary",
     "InitOrder" : 40,
     "AdvancedOptions" : { }, 
-    "Dependency" : ["ModuleI2CBus.min.js"], 
+    "Dependency" : ["plcI2CBus.min.js"], 
     "Description" : "I2CBus manager desription"
   },
   "SensorManager" : {
@@ -143,8 +145,39 @@
     "Importance" : "Primary",
     "InitOrder" : 70,
     "AdvancedOptions" : { }, 
-    "Dependency" : ["ModuleSensorManager.min.js"],
-    "Description" : "ModuleSensorManager desription"
+    "Dependency" : ["plcDeviceManager.min.js"],
+    "Description" : "DeviceManager desription"
+  }
+}
+```
+</div>
+
+### netsetup.json
+<div style = "color: #555">
+
+Файл для конфигурации чипа ESP8266.
+
+Пример файла netsetup.json:
+```json
+{
+  "ESP": {
+    "restore": 0,               // флаг на реконфигурацию чипа
+    "stationMode": 1,           // режим модуля (точка доступа/станция)
+    "country": {                // настройка страны и количества поддерживаемых радиоканалов
+      "index": "RU",
+      "startchannel": 1,
+      "maxchannels": 13
+    },
+    "protocol": 3,              // версия протокола 802.11 b/g/n
+    "autoConnect": 1,           // флаг на автоматическое подключение
+    "reConnect": {              // настройка переподключения (5 - интервал между попытками в секундах, 0 - количество попыток (бесконечно))
+      "interval": 5,
+      "retries": 0
+    },
+    "accessPoint": {            // конфигурация точки доступа, к которой должно быть осуществлено подключение
+      "ssid":"MyWifiNet",
+      "pass":"password123"
+    }
   }
 }
 ```
@@ -176,11 +209,30 @@
 В фреймворке реализована трёхстадийная система загрузки. Запуск разделён на три файла: .boot0, .boot1 и .boot2, которые выполняются друг за другом при старте системы. Для корректного функционирования фреймворка, все три файла должны быть загружы во Flash память PLC.
 
 - <mark style="background-color: lightblue">.boot0</mark> - код в файле реализует настройку консоли для корректной работы PLC в автономном режиме (не подключен к компьютеру). Также осуществляется перевод всех портов в режим input за исключением тех, что указаны в файле ports.json;
-- <mark style="background-color: lightblue">.boot1</mark> - код в этом файле производит проверку на аварийный запуск, а также запускает службу Process - главную службу фреймворка;
-- <mark style="background-color: lightblue">.boot2</mark> - код инициализует датчики и актуаторы, опираясь на выбранную конфигурацию из файла devices.json. Созданные каналы помещаются в глобальный объект Devices с указанным именем устройства.
+- <mark style="background-color: lightblue">.boot1</mark> - код в этом файле производит проверку на аварийный запуск, а также запускает службу Process - главную службу фреймворка.
 
 ### Аварийный запуск системы
 Фреймворком предусмотрен механизм обхода загрузки служб и программ в случае ошибки. Для этого требуется удерживать кнопку BTN1 на запуске PLC. Фреймворк пропустит запуск своих служб и инициализацию датчиков с актуаторами, и в итоге будет выполнен файл SysDeadEnd.js. Это файл должен быть предварительно загружен во Flash память PLC.
+
+</div>
+
+# Алгоритм запуска фреймворка
+<div style = "color: #555">
+
+Запуск фреймворка происходит по следующему алгоритму:
+- Запуск .boot0, конфигурация консоли и перевод пинов в режим input;
+- Запуск .boot1, проверка нажатия аварийной кнопки, запуск службы plcProcess;
+- Проверка наличия необходимых конфигурационных файлов, выбор запускаемой программы;
+- Инициализация всех служб, описанных в services.json;
+- Создание каналов датчиков, указанных в соответствующей программе конфигурации в devices.json;
+- Инициализация сетевого подключения, чтение конфигураций из network.json, создание необходимых шин;
+- Попытка подключения указанным в конфигурационном файле способом;
+- Если выбрано подключение по WiFi, проверяется файл netsetup.json;
+- Если в netsetup взведён флаг, то происходит перенастройка WiFi-модуля, и только потом происходит подключение к указанному сиду;
+- В противном случае подключение происходит автоматически параллельно с работой службы plcProcess;
+- После установки соединения происходит включение в работу сетевых служб (Graylog, NTP, MQTT итд);
+- По завершению процессов установки соединения с соответствующими серверными службами NTP и MQTT запускаются технические циклы (периодическая синхронизация времени и проверка состояния брокера);
+- Не зависимо от успеха предыдущего шага запускается указанная программа.
 
 </div>
 
@@ -189,7 +241,7 @@
 
 Создание объекта Process в файле .boot0.Предполагается, что все необходимые модули уже загружены в систему:
 ```js
-let Process = new (require("ModuleProcess.min.js"))();
+let Process = new (require("plcProcess.min.js"))();
 Process.Run();
 ```
 Вывод при запуске системы в консоль:
@@ -199,13 +251,13 @@ Process.Run();
 </div>
 
 # Зависимости
-- [ModuleLogger](https://github.com/Konkery/ModuleLogger/blob/main/README.md)
-- [ModuleAppError](https://github.com/Konkery/ModuleAppError/blob/main/README.md)
-- [ModuleAppMath](https://github.com/Konkery/ModuleAppMath/blob/main/README.md)
-- [ModuleI2CBus](https://github.com/Konkery/ModuleI2CBus/blob/main/README.md)
-- [ModuleSPIBus](https://github.com/Konkery/ModuleSPIBus/blob/main/README.md)
-- [ModuleUARTBus](https://github.com/Konkery/ModuleUARTBus/blob/main/README.md)
-- [ModuleActuator](https://github.com/Konkery/ModuleActuator/blob/main/README.md)
-- [ModuleSensor](https://github.com/Konkery/ModuleSensor/blob/main/README.md)
-- [ModuleSensorManager](https://github.com/Konkery//blob/main/README.md)
+- [plcLogger](https://github.com/Konkery/plcLogger/blob/main/README.md)
+- [plcAppError](https://github.com/Konkery/plcAppError/blob/main/README.md)
+- [plcAppMath](https://github.com/Konkery/plcAppMath/blob/main/README.md)
+- [plcI2CBus](https://github.com/Konkery/plcI2CBus/blob/main/README.md)
+- [plcSPIBus](https://github.com/Konkery/plcSPIBus/blob/main/README.md)
+- [plcUARTBus](https://github.com/Konkery/plcUARTBus/blob/main/README.md)
+- [plcActuator](https://github.com/Konkery/plcActuator/blob/main/README.md)
+- [plcSensor](https://github.com/Konkery/plcSensor/blob/main/README.md)
+- [plcDeviceManager](https://github.com/Konkery/DeviceManager/blob/main/README.md)
 </div>

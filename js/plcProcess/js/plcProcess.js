@@ -9,6 +9,7 @@ const MAIN_CONFIG = 'init.json';
 const SYSTEM_CONFIG = 'system.json';
 const DEVICE_CONFIG = 'device.json';
 const NETWORK_CONFIG = 'network.json';
+const NETSETUP_CONFIG = 'netsetup.json';
 const SERVICE_CONFIG = 'services.json';
 const MQTT_CONFIG = 'MQTTClientConfig.json';
 
@@ -25,6 +26,7 @@ const MSG_STARTUP = 'Starting up framework\n';
 const MSG_SENSOR_ANCESTOR = 'File \'plcSensor.min.js\' is absent. You won\'t be able to create any sensors!';
 const MSG_ACTUATOR_ANCESTOR = 'File \'plcActuator.min.js\' is absent. You won\'t be able to create any actuators!';
 const MSG_NO_NETWORK_CONFIG = 'Cannot find \'network.json\'. Skipping network setup';
+const MSG_NO_NETSETUP_CONFIG = 'Cannot find \'netsetup.json\'. Skipping network setup';
 const MSG_BOOTUP_SUCCESS = 'Boot up sequence complete!';
 const MSG_BOOTUP_ABORT = 'Not all primary services started or no primary services at all. Aborting. . .';
 const MSG_RTC_SUCCESS = 'System time is set via RTC clock module';
@@ -93,6 +95,7 @@ class ClassProcess {
 
         this._RTC = undefined;
         this._HaveNet = false;
+        this._HaveConsole = false;
         this._Name = 'Process';
         this._IsFinished = false;
     }
@@ -164,9 +167,12 @@ class ClassProcess {
             try {
                 if (!(this._FileReader.list().includes(NETWORK_CONFIG)))
                     throw MSG_NO_NETWORK_CONFIG;
+                if (!(this._FileReader.list().includes(NETSETUP_CONFIG)))
+                    throw MSG_NO_NETSETUP_CONFIG;
 
                 let ethconf = this._FileReader.readJSON(NETWORK_CONFIG, true).eth;
                 let wificonf = this._FileReader.readJSON(NETWORK_CONFIG, true).wifi;
+                let setconf = this._FileReader.readJSON(NETSETUP_CONFIG, true)
                 let netconf;
                 let bus;
                 let flag;
@@ -220,9 +226,8 @@ class ClassProcess {
                 }
 
                 try {
-                    H.Network.Service.Init(netconf, bus, flag, (res) => {
-                        this._HaveNet = res;
-                        if (this._HaveNet) {
+                    H.Network.Service.Init(setconf, bus, flag, (res) => {
+                        if (res) {
                             H.Logger.Service.InitGraylogOutput(H.Logger.AdvancedOptions);
                             Object.values(H)
                                 .filter(serv => (serv.Importance === 'Auxilary'))
@@ -512,6 +517,9 @@ class ClassProcess {
         catch (e) {
             console.log(`Error ${e}`);
         }
+    }
+    UpdateNetstart(nc) {
+        this._FileReader.writeJSON(NETSETUP_CONFIG, nc);
     }
 }
 

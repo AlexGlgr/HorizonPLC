@@ -79,7 +79,7 @@ var netCallbacks = {
         } else {
           socks[sckt] = undefined;
           setTimeout(function() {
-            throw new Error("CIPSERVER failed ("+(d?d:"Timeout")+")");
+            H.Logger.Service.Log({service: "Network", level: 'E', msg: `CIPSERVER failed (${d?d:"Timeout"})`});
           }, 0);
         }
       });
@@ -316,11 +316,16 @@ var wifiFuncs = {
   connect : function(ssid, pass, callback) {
     at.cmd("AT+CWMODE=1\r\n", 1000, function(cwm) {
       if (cwm!="no change" && cwm!="OK") callback("CWMODE failed: "+(cwm?cwm:"Timeout"));
-      else at.cmd("AT+CWJAP="+JSON.stringify(ssid)+","+JSON.stringify(pass.password)+"\r\n", 20000, function cb(d) {
+      else at.cmd("AT+CWJAP="+JSON.stringify(ssid)+","+JSON.stringify(pass.password)+"\r\n", 15000, function cb(d) {
         if (["WIFI DISCONNECT","WIFI CONNECTED","WIFI GOT IP","+CWJAP:1"].indexOf(d)>=0) return cb;
         if (d!="OK") setTimeout(callback,0,"WiFi connect failed: "+(d?d:"Timeout"));
         else setTimeout(callback,0,null);
       });
+    });
+  },
+  disconnect : function(callback) {
+    at.cmd("AT+ CWQAP\r\n", 1000, function(d) {
+      callback(d);
     });
   },
   scan: function (callback) {

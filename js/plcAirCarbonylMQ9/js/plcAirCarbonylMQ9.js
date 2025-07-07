@@ -9,12 +9,36 @@ class ClassAirCarbonylMQ9 extends ClassSensor {
      * @constructor
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
-    constructor(_opts, _sensor_props) {
-        ClassSensor.call(this, _opts, _sensor_props);
+    constructor(_opts) {
+        ClassSensor.call(this, _opts);
         this._Name = 'ClassAirCarbonylMQ9'; //переопределяем имя типа
 		this._Sensor = require('BaseClassMQX.min.js').connect({dataPin: _opts.pins[0], heatPin: _opts.pins[1], model: 'MQ9', r0: _opts.baseline});
         this._MinPeriod = 250;
         this._Interval;
+        this._CanRead = true;
+    }
+    /**
+     * @method
+     * Инициализирует датчик
+     */
+    Init() {
+        this.Preheat();
+    }
+    /**
+     * @method
+     * Запускает сбор данных с датчика и передачи их в каналы
+     * @param {Number} _period          - частота опроса (минимум 250 мс)
+     * @param {Number} _num_channel     - номер канала
+     */
+    Start(_num_channel, _period) {
+        let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period    //частота сверяется с минимальной
+                    : this._MinPeriod;
+        this._Channels[_num_channel].Status = 1;
+        if (!this._Interval) {          //если в данный момент не ведется ни одного опроса
+            this._Interval = setInterval(() => {
+                if (this._Channels[0].Status) this._Channels[0].Value = this._CanRead ? this._Sensor.read('CH4') : 0;
+            }, period);
+        }
     }
     /**
      * @method
@@ -48,21 +72,6 @@ class ClassAirCarbonylMQ9 extends ClassSensor {
      */
     Calibrate(_val) {
         this._Sensor.calibrate(_val);
-    }
-    /**
-     * @method
-     * Запускает сбор данных с датчика и передачи их в каналы
-     * @param {Number} _period          - частота опроса (минимум 250 мс)
-     * @param {Number} _num_channel     - номер канала
-     */
-    Start(_num_channel, _period) {
-        let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period    //частота сверяется с минимальной
-                 : this._MinPeriod;
-        this._Channels[0].Status = 1;
-
-        this._Interval = setInterval(() => {
-            this._Channels[0].Value = (this._Channels[0].Status == 1) ? this._Sensor.read('CO') : 0;
-        }, period);
     }
     /**
      * @method

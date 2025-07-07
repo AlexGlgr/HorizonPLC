@@ -6,10 +6,10 @@ const MSG_TIMEOUT = 'Failed to connect in 10 seconds.'
 
 /**
  * @class
- * Модуль обеспечивает работу платформы с чипом ESP8266,
- * обеспечивающим WiFi-соединение
+ * Модуль обеспечивает работу платформы с сетевым соединением,
+ * работает с ESP8266, ESP32 и WIZNET
  */
-class ClassWifi {
+class ClassNetwork {
     /**
      * @constructor
      */
@@ -18,7 +18,7 @@ class ClassWifi {
         if (this.Instance) {
             return this.Instance;
         } else {
-            ClassWifi.prototype.Instance = this;
+            ClassNetwork.prototype.Instance = this;
         }
         this._Name = 'Network';
         this._Core;
@@ -27,6 +27,7 @@ class ClassWifi {
         this._Scan;
         this._Ip;
         this._BaseModule = options.baseModule;
+        this._resetlock = false;
     }
     /**
      * @method
@@ -47,16 +48,18 @@ class ClassWifi {
                     return;
                 }
                 this._ChipType = 'esp8266';
-                this._Core = require(this._BaseModule).setup(bus, (err) => {
+                H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Using ESP8266.'});
+                this.EventsHandling();
+                
+                this._Core = new (require(this._BaseModule))(bus);
+                this._Core.Init((err) => {
                     if (err) {
-                        H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
-                        callback(false);
+                            H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
+                            callback(false);
                     }
-                    else {
-                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Using ESP8266.'});
-                        this.WifiSequence(nc, callback);
-                    }
-                });
+                    else this.Restore(nc, callback);
+                    //callback(true);
+                })
             }
             else {
                 this._ChipType = 'esp32';
@@ -66,6 +69,28 @@ class ClassWifi {
             }
         }
     }
+    EventsHandling() {
+        Object.on('connect', () => {
+            this._Core.GetCurrAP()
+            .then((ap) => {
+                this._Ssid = ap;
+                this._Core.GetIP()
+                .then((ip) => {
+                    this._Ip = ip;
+                    Process._HaveNet = true;
+                    H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Connected to ${this._Ssid}. IP: ${this._Ip}`})
+                })
+                .catch((err) => {
+                    H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
+                })
+            })
+            .catch((err) => {
+                H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
+            })
+        })
+    }
+
+
     EtherSequence (nc, bus, callback) {
         let cs = eval(nc.bus.cs);
         
@@ -95,6 +120,35 @@ class ClassWifi {
             });*/
         }, 5000);
     }
+    Restore (nc, callback) {
+        if (nc.ESP.restore == 1) {                
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Attempting establish connection to ${nc.ESP.accessPoint.ssid}.`});
+            this._Core.Restore()
+            .then(() => this._Core.Echo(0))
+            .then(() => this._Core.Sleep(0))
+            .then(() => this._Core.MulSockets(1))
+            .then(() => this._Core.CIpdInfo(1))
+            .then(() => this._Core.SysStore(1))
+            .then(() => this._Core.Mode(nc.ESP.stationMode))
+            .then(() => this._Core.Country(nc.ESP.country.index,nc.ESP.country.startchannel,nc.ESP.country.maxchannels))
+            .then(() => this._Core.STAProto(nc.ESP.protocol))
+            .then(() => this._Core.AutoConnect(nc.ESP.autoConnect))
+            .then(() => this._Core.ReConnect(nc.ESP.reConnect.interval,nc.ESP.reConnect.retries))
+            .then(() => this._Core.Connect(nc.ESP.accessPoint.ssid, nc.ESP.accessPoint.pass))
+            .then(() => this._Core.SysStore(0))
+            .then(() => { 
+                H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Chip reconfiguration complete'});
+                nc.ESP.restore = 0;
+                Process.UpdateNetstart(nc);
+                callback(true);
+            })
+            .catch((err) => {
+                H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
+                callback(false);
+            })
+        }
+        else callback(true);
+    }
     /**
      * @method
      * Основной цикл подключения к точке доступа
@@ -102,13 +156,25 @@ class ClassWifi {
      * @param {Function} callback   - функция возврата 
      */
     WifiSequence (nc, callback) {
-        this.GetAPCreds(nc, (pass) => {
+        let ap;
+        let ip;
+        setTimeout(() => {
+            this.Restore(nc)
+            .then(() => this._Core.currAP())
+            .then((_ap) => { this._Core.getIP(); ap = _ap; })
+            .then((_ip) => {ip = _ip; H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Connected to ${ap}. IP: ${ip}`}); callback(true)})
+            .catch((err) => {
+                H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});
+                callback(false)
+            })
+        }, 2000);
+        /*this.GetAPCreds(nc, (pass) => {
             this.Connect(pass, (res) => {
                 this.SetStatic(nc, () => {
                     callback(res);
                 });
             });
-        });
+        });*/
     }
     /**
      * @method
@@ -154,6 +220,9 @@ class ClassWifi {
                 callback(false);
             }
             else {
+                if (this._ChipType == 'esp32') {
+                    this._Core.stopAP();
+                }
                 this._Core.getIP((err, info) => {
                     if (err) {
                         H.Logger.Service.Log({service: this._Name, level: 'E', msg: 'Cannot get proveded IP'});
@@ -213,11 +282,6 @@ class ClassWifi {
         });
         return pass;
     }
-    UDPHost(_host, _port) {
-        /*if (esp == 'esp8266') {
-            this._Core.setUDP(_host, _port);
-        }*/
-    }
     GetSocksData() {
         if (this._ChipType === 'esp8266') {
             this._Core.getSocks((d) => {
@@ -228,6 +292,44 @@ class ClassWifi {
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Socket info not supported for current chip!`});
         }
     }
+    CreateSocket (_host, _port, _type, _service, callback) {
+        this._Core.SetSocketEndpoint(_host, _port, _service);
+        if (_type == 'tcp') {
+            return require("net").connect({ host: _host, port: _port }, callback);
+        }
+        else if (_type == 'udp') {
+            return require('dgram').createSocket('udp4', callback);
+        }
+        else {
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Unknown/unsupported socket type: ${_type}`});
+            return undefined;
+        }
+    }
+    Status () {
+        console.log(this._Core._SocketArray);
+        this._Core.GetStatuses();
+    }
+    Reset(callback) {
+        /*if (this._ChipType == 'esp8266') {
+            if (!this._resetlock) {
+                Process._HaveNet = false;
+                this._resetlock = true;
+                H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Reset requested. Network timeeout 20 seconds`});
+                this._Core.reset((cb) => {
+                    setTimeout(() => {
+                        this._resetlock = false;
+                        Process._HaveNet = true;
+                        callback(cb);
+                    }, 20000);
+                })
+            }
+            else {
+                setTimeout(() => {
+                    callback();
+                }, 10000);
+            }            
+        }*/
+    }
 }
 
-exports = ClassWifi;
+exports = ClassNetwork;
