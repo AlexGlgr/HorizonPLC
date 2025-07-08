@@ -33,12 +33,6 @@ class ClassLogger {
         
         this.netlock = false;
     }
-    InitConsoleOutput() {
-        ;
-    }
-    InitGraylogOutput() {
-        ;
-    }
     /**
      * @method
      * @description
@@ -66,7 +60,9 @@ class ClassLogger {
         else if (level <= 1){
             this.WriteToFile({service: _msg.service, fdesc: fdesc, msg: _msg.msg})
         }
-        this.WriteToConsole({service: _msg.service, fdesc: fdesc, msg: _msg.msg});
+        else if (Process._HaveConsole || this._Debug) {
+            this.WriteToConsole({service: _msg.service, fdesc: fdesc, msg: _msg.msg});
+        }        
     }
     /**
      * @method
@@ -86,11 +82,6 @@ class ClassLogger {
                 sysbuzz.RunTask('BeepTwice', 0.8, 300);
                 this.WriteToConsole({service: this._Name, fdesc: 'ERROR', msg: `Error sending UDP packet: ${e}`});
                 this.WriteToFile({service: this._Name, fdesc: 'ERROR', msg: `Error sending UDP packet: ${e}`});
-                /*this._Socket.close();
-                H.Network.Service.Reset(() => {
-                    this.netlock = false;
-                    this._Socket = require('dgram').createSocket('udp4');
-                });*/
             }            
         }
     }

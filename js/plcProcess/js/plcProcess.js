@@ -144,6 +144,8 @@ class ClassProcess {
                 return;
             }
 
+            if (H.RouteREPL.Service.isREPLConnected(this._HaveConsole));
+
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_BOARD_ID} ${this._BoardName} (${process.env.BOARD} ${process.env.SERIAL})`});
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_LOAD_FILE} ${this._LoadFile}`});
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_FREE_FLASH} ${this._FileReader.getFree()} bytes.`});
@@ -228,7 +230,7 @@ class ClassProcess {
                 try {
                     H.Network.Service.Init(setconf, bus, flag, (res) => {
                         if (res) {
-                            H.Logger.Service.InitGraylogOutput(H.Logger.AdvancedOptions);
+                           // H.Logger.Service.InitGraylogOutput(H.Logger.AdvancedOptions);
                             Object.values(H)
                                 .filter(serv => (serv.Importance === 'Auxilary'))
                                 .sort((a,b) => a.InitOrder - b.InitOrder)
