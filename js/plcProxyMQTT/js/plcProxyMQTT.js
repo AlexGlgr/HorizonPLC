@@ -20,7 +20,9 @@ class ClassProxyMQTT {
 
         this._SkipData = false;
         this._DataSkipInterval = null;
+        this._ReconnectInterval = null;
         // EVENTS
+        Object.on('netReady', () => setTimeout(() => {_mqtt.connect();}, Process.GetRandomStartupInterval()));
         Object.on('proxymqtt-sub-sensorall', this.HandlerEvents_proxymqtt_sub_sensorall.bind(this));
         Object.on('all-data-raw-get', this.HandlerEvents_all_data_raw.bind(this)); 
         this._MQTT.on('connected',    this.OnConnected.bind(this));
@@ -37,8 +39,8 @@ class ClassProxyMQTT {
     HandlerEvents_all_data_raw(_msg) {
         if (!this._SkipData) {
             const ch_id = _msg.arg[0];
-            const topic = this._Subs.dm.sensor
-                .find(_mapObjs => _mapObjs.name == ch_id) || {}
+            const topic = (this._Subs.dm.sensor
+                .find(_mapObjs => _mapObjs.name == ch_id) || {})
                 .address;
             if (typeof topic == 'string' && this._MQTT.connected)
                 this._MQTT.publish(topic, JSON.stringify(_msg.value[0]));
@@ -54,17 +56,18 @@ class ClassProxyMQTT {
      */
     HandlerEvents_proxymqtt_sub_sensorall(_msg) {
         try {
-            this._Subs.dm.sensor   = this._Subs.dm.sensor   || list[0].sensor;
-            this._Subs.dm.actuator = this._Subs.dm.actuator || list[0].actuator;
-            // подписываемся только на топики сенсоров
-            let sub_topic_list = this._Subs.dm.sensor.map(_mapObj => _mapObj.address);
+            let list = _msg.value;
+            this._Subs.dm.sensor   = list[0].sensor || [];
+            this._Subs.dm.actuator = list[0].actuator || [];
+            // подписываемся только на топики актуаторов
+            let sub_topic_list = this._Subs.dm.actuator.map(_mapObj => _mapObj.address);
             this._MQTT.subscribe(sub_topic_list);
-            H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT subscribed on topics ${actuator_topic_names}` });
+            H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT subscribed on topics ${sub_topic_list}` });
         } catch (e) {
             H.Logger.Service.Log({ 
                 service: 'proxymqtt', 
                 level: 'E', 
-                msg: `Error processing "proxymqtt-sub-sensorall" msg` 
+                msg: `Error processing "proxymqtt-sub-sensorall" msg: ${e.message}` 
             });
         }
     }
@@ -76,8 +79,8 @@ class ClassProxyMQTT {
      */
     OnPublish(pub) {
         // Находим маппинг по топику и забираем ID канала
-        const ch_id = this._Subs.dm.actuator
-            .find(_mapObj => _mapObj.address == pub.topic) || {}
+        const ch_id = (this._Subs.dm.actuator
+            .find(_mapObj => _mapObj.address == pub.topic) || {})
             .name;
         if (typeof ch_id == 'string')
             Object.emit('dm-actuator-set', { arg: [ch_id], value: [pub.message] });
@@ -90,20 +93,23 @@ class ClassProxyMQTT {
     OnDisconnected() {
         H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT disconnected!` });
         
+        if (this._ReconnectInterval) return;
         let c = 0;
-        let interval = setInterval(() => {
+        this._ReconnectInterval = setInterval(() => {
             if (this._MQTT.connected) {
-                clearInterval(interval);
+                clearInterval(this._ReconnectInterval);
+                this._ReconnectInterval = null;
+            } else if (c == 3) {
+                clearInterval(this._ReconnectInterval);
+                this._ReconnectInterval = null;
+                H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT failed to reconnect after ${c} retries. Reset` });
                 return;
+            } else {
+                H.Logger.Service.Log({ service: 'MQTT', level: 'I', msg: `MQTT trying to reconnect..` });
+                this._MQTT.connect();
             }
-            if (++c == 3) {
-                H.Logger.Service.Log('MQTT', H.Logger.Service.LogLevel.INFO, `MQTT failed to reconnect after ${c} retries.`);
-                clearInterval(interval);
-                return;
-            }
-            H.Logger.Service.Log('MQTT', H.Logger.Service.LogLevel.INFO, `MQTT trying to reconnect..`);
-            this._MQTT.connect();
-        }, 5000);
+            c++;
+        }, 7000);
     }
 
     /**

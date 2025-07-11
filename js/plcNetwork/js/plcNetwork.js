@@ -78,7 +78,8 @@ class ClassNetwork {
                 .then((ip) => {
                     this._Ip = ip;
                     Process._HaveNet = true;
-                    H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Connected to ${this._Ssid}. IP: ${this._Ip}`})
+                    H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Connected to ${this._Ssid}. IP: ${this._Ip}`});
+                    Object.emit('netReady');
                 })
                 .catch((err) => {
                     H.Logger.Service.Log({service: this._Name, level: 'E', msg: err});

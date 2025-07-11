@@ -122,7 +122,6 @@ class ClassProcess {
             this._FileReader.open('syslog.txt', 'a').write(MSG_STARTUP);
 
             Object.values(H)
-                .filter(serv => (serv.Importance === 'Primary'))
                 .sort((a,b) => a.InitOrder - b.InitOrder)
                 .forEach((serv) => {
                     try {
@@ -132,11 +131,20 @@ class ClassProcess {
                         startUpFlag |= 1;
                     }
                     catch (e) {
-                        this.SystemMessage('WARN', this.GetFailString(serv.Dependency[0], e));
-                        serv.ErrorMsg = e.toString();
-                        startUpFlag |= 2;
+                        if (serv.Importance === 'Primary') {
+                            this.SystemMessage('ERROR', this.GetFailString(serv.Dependency[0], e));
+                            serv.ErrorMsg = e.toString();
+                            startUpFlag |= 2;
+                        }
+                        else if (serv.Importance === 'Auxilary') {
+                             this.SystemMessage('WARN', this.GetFailString(serv.Dependency[0], e));
+                            serv.ErrorMsg = e.toString();
+                        }
+                        else this.SystemMessage('WANR', 'Unknown service format', e)                        
                     }
             });
+
+            console.log(startUpFlag);
 
             if (startUpFlag != 1) {
                 this.SystemMessage('ERROR', MSG_BOOTUP_ABORT);
@@ -144,7 +152,7 @@ class ClassProcess {
                 return;
             }
 
-            if (H.RouteREPL.Service.isREPLConnected(this._HaveConsole));
+            //if (H.RouteREPL.Service.isREPLConnected(this._HaveConsole));
 
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_BOARD_ID} ${this._BoardName} (${process.env.BOARD} ${process.env.SERIAL})`});
             H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_LOAD_FILE} ${this._LoadFile}`});
@@ -231,20 +239,7 @@ class ClassProcess {
                     H.Network.Service.Init(setconf, bus, flag, (res) => {
                         if (res) {
                            // H.Logger.Service.InitGraylogOutput(H.Logger.AdvancedOptions);
-                            Object.values(H)
-                                .filter(serv => (serv.Importance === 'Auxilary'))
-                                .sort((a,b) => a.InitOrder - b.InitOrder)
-                                .forEach((serv) => {
-                                    try {
-                                        serv.Service = new (require(serv.Dependency[0]))(serv.AdvancedOptions);
-                                        this.SystemMessage('INFO', this.GetSuccessString(serv.Dependency[0]));
-                                        serv.Status = 'running';
-                                    }
-                                    catch (e) {
-                                        this.SystemMessage('WARN', this.GetFailString(serv.Dependency[0], e));
-                                        serv.ErrorMsg = e.toString();
-                                    }
-                                });
+                            
                         }
                         if (!H.NTP || H.NTP.Status !== 'running')
                             this.WrapStartUp();                      
@@ -522,6 +517,9 @@ class ClassProcess {
     }
     UpdateNetstart(nc) {
         this._FileReader.writeJSON(NETSETUP_CONFIG, nc);
+    }
+    GetRandomStartupInterval() {
+        return Math.floor(Math.random() * 5000) + 200;
     }
 }
 

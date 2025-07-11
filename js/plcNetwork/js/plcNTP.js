@@ -18,7 +18,7 @@ class ClassNTP {
         this._Host = options.host || '127.0.0.1';
         this._Port = options.port || 123;
         this._Tz = options.tz || '0';
-        this.SetNTP();
+        Object.on('netReady', () => setTimeout(() => {this.SetNTP();}, Process.GetRandomStartupInterval()));
     }
     SetNTP() {
         let tOut = setTimeout (() => {

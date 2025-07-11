@@ -338,13 +338,18 @@ class ClassPowerINA3221 extends ClassSensor {
         if (!this._Interval) {          //если в данный момент не ведется ни одного опроса
             let period = (typeof _period === 'number' & _period >= this._MinPeriod) ? _period : this._MinPeriod;
             this._Interval = setInterval(() => {
-                for (let i = 0; i < 3; i++) {
-                    if (this._Config.channels.includes(i+1)) {
-                        if (this._Channels[0 + i * 4].Status) this._Channels[0 + i * 4].Value = this._Sensor.ReadShuntVoltageRaw(i + 1) * 0.005
-                        if (this._Channels[1 + i * 4].Status) this._Channels[1 + i * 4].Value = this._Sensor.ReadBusVoltageRaw(i + 1) * 0.001;
-                        if (this._Channels[2 + i * 4].Status) this._Channels[2 + i * 4].Value = this._Channels[0 + i * 4].Value/this._Config.rShunts[i]/1000;
-                        if (this._Channels[3 + i * 4].Status) this._Channels[3 + i * 4].Value = this._Channels[2 + i * 4].Value * (this._Config.vbus != 0 ? this._Config.vbus : this._Channels[1 + i * 4].Value);
+                try {
+                    for (let i = 0; i < 3; i++) {
+                        if (this._Config.channels.includes(i+1)) {
+                            if (this._Channels[0 + i * 4] != undefined && this._Channels[0 + i * 4].Status) this._Channels[0 + i * 4].Value = this._Sensor.ReadShuntVoltageRaw(i + 1) * 0.005
+                            if (this._Channels[1 + i * 4] != undefined && this._Channels[1 + i * 4].Status) this._Channels[1 + i * 4].Value = this._Sensor.ReadBusVoltageRaw(i + 1) * 0.001;
+                            if (this._Channels[2 + i * 4] != undefined && this._Channels[2 + i * 4].Status) this._Channels[2 + i * 4].Value = this._Channels[0 + i * 4].Value/this._Config.rShunts[i]/1000;
+                            if (this._Channels[3 + i * 4] != undefined && this._Channels[3 + i * 4].Status) this._Channels[3 + i * 4].Value = this._Channels[2 + i * 4].Value * (this._Config.vbus != 0 ? this._Config.vbus : this._Channels[1 + i * 4].Value);
+                        }
                     }
+                }
+                catch (e) {
+                    H.Logger.Service.Log({service: 'INA3221', level: 'E', msg: e});
                 }
             }, period);
         }

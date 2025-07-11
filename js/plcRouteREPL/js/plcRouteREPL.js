@@ -32,6 +32,7 @@ class ClassRouteREPL {
         this._Name = 'RouteREPL';
         this._Port = _opts.port || 23;
         this._Sending = false;
+        this.isREPLConnected(Process._HaveConsole);
         // авто запуск роутинга после полного старта фреймворка
         Object.on('complete', () => {
             // если была передана UART-шина, нужно сохранить ссылку на нее и выполнить setup()
