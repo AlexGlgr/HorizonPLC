@@ -32,7 +32,7 @@ class ClassRouteREPL {
         this._Name = 'RouteREPL';
         this._Port = _opts.port || 23;
         this._Sending = false;
-        this.isREPLConnected(Process._HaveConsole);
+        Process._HaveConsole = this.isREPLConnected();
         // авто запуск роутинга после полного старта фреймворка
         Object.on('complete', () => {
             // если была передана UART-шина, нужно сохранить ссылку на нее и выполнить setup()
@@ -187,8 +187,8 @@ class ClassRouteREPL {
      * @returns 
      */
     isREPLConnected(_flag) {
-        let func = USB.isConnected || E.isUSBConnected || (() => false);
-        return Boolean(this._IsOn || func());
+        //let func = USB.isConnected() || E.isUSBConnected() || (() => false);
+        return Boolean(this._IsOn || USB.isConnected() || E.isUSBConnected());
     }
     /**
      * @method

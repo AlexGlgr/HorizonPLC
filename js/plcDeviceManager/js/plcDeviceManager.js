@@ -1,7 +1,7 @@
-const ClassSensor   = require('plcSensor');
-const ClassActuator = require('plcActuator');
+const ClassSensor   = require('plcSensor.min.js');
+const ClassActuator = require('plcActuator.min.js');
 
-const POLLING_FREQ = 5;
+let POLLING_FREQ = 1;
 /**
  * @typedef ClassMsg
  * @property {[string|number]} arg
@@ -14,19 +14,21 @@ const POLLING_FREQ = 5;
  * инициализации, адресации команд, сбора данных 
  */
 class ClassDeviceManager {
-    constructor() {
+    constructor(_opts) {
         if (this.Instance) {
             return this.Instance;
         } else {
             ClassDeviceManager.prototype.Instance = this;
         }
+        if (_opts && typeof _opts.pollFreq == 'number') POLLING_FREQ = _opts.pollFreq;
 
         this._Devices = [];
         // this._RegisteredBuses = {};
         // запуск циклического опроса
         Object.on('dm-sub-sensorall', (_msg) => {
             // let freq = _msg.arg[0];
-            this.OnSubSensall();
+            H.Logger.Service.Log({ service: 'DM', level: 'I',  msg: `dm-sub-sensorall` });
+            this.OnSubSensorall(_msg);
             if (!this._Interval) this.StartPolling(POLLING_FREQ);
         });
         // его остановка
@@ -108,10 +110,10 @@ class ClassDeviceManager {
         let value = { sensor: [], actuator: [] };
         
         this.ActuatorChannels.forEach(_ch => {
-            value.sensor.push(`${_ch.Device._Article}-${ch.ID}`);
+            value.sensor.push(`${_ch.Device._Article}-${_ch.ID}`);
         });
         this.SensorChannels.forEach(_ch => {
-            value.actuator.push(`${_ch.Device._Article}-${ch.ID}`);
+            value.actuator.push(`${_ch.Device._Article}-${_ch.ID}`);
         });
         return value;
     }
@@ -123,7 +125,7 @@ class ClassDeviceManager {
     InitBuses() {
         let config = Process.GetBusesConfig();
 
-        for (let busName of Object.keys(config).sort()) {
+        for (let busName of Object.keys(config)) {
             try {
                 let opts = config[busName];
                 // Приведение строкового представления пинов к получению их объектов                                   
@@ -132,12 +134,11 @@ class ClassDeviceManager {
                 }
                 opts.name = busName;
                 if (busName.startsWith('I2C')) H.I2Cbus.Service.AddBus(opts);
-                else if (busName.startsWith('SPI')) H.SPIbus.Service.AddBus(opts);
-                else if (busName.startsWith('UART')) H.UARTbus.Service.AddBus(opts);
-                else throw 'Unsupported bus signature.'
+                if (busName.startsWith('SPI')) H.SPIbus.Service.AddBus(opts);
+                if (busName.startsWith('UART')) H.UARTbus.Service.AddBus(opts);
 
             } catch (e) {
-                H.Logger.Log({ service: 'dm', level: 'E',  msg: `Failed to init bus ${busname}` });
+                H.Logger.Service.Log({ service: 'DM', level: 'E',  msg: `Failed to init bus ${busName}: ${e}` });
             }
         }
     }  
@@ -209,6 +210,7 @@ class ClassDeviceManager {
             // console.log('DEBUG>>iteration is done');
 
         }, 1 / freq * 1000);
+        H.Logger.Service.Log({ msg: `Polling started with frequency ${freq}`, service: 'DM', level: 'I' });
         return true;
 
     }
@@ -234,7 +236,7 @@ class ClassDeviceManager {
         this.SendWS(msg);
     }
 
-    OnSubSensall(_msg) {
+    OnSubSensorall(_msg) {
         let source = _msg.metadata ? _msg.metadata.source ? _msg.metadata.source : undefined : undefined;
         if (!source) return;
         let msg = {
@@ -352,10 +354,11 @@ class ClassDeviceManager {
             H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Pins [${opts.pins.join(', ')}] are already used` });
             return undefined;
         }
+        
         try {
-            let device = new module(sensorConfig, sensorConfig);
+            let device = new module(sensorConfig);
             this.AddDevice(device);
-            return device._Channels;
+            return device._Channels.filter(_ch => Boolean(_ch));
         } catch (e) {
             H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Error creating ${id}: ${e}` });
         }

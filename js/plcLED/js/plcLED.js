@@ -5,7 +5,8 @@ const ClassActuator = require('plcActuator.min.js');
  */
 class ClassLED extends ClassActuator {
     constructor(opts) {
-        ClassActuator.call(this, opts);
+        //ClassActuator.call(this, opts);
+        super(opts);
         /**
          * Примечание: предусмотрена возможность управления N светодиодами (каждый канал - диод)
          * Не является рекомендуемым подходом

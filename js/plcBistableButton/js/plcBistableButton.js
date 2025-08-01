@@ -17,7 +17,8 @@ const ClassSensor = require('plcSensor.min.js');
  */
 class ClassBistableButton extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);
+        //ClassSensor.call(this, opts);
+        super(opts);
         this._SubChannels = this._SubChannels.filter(_ch => typeof _ch.SetValue == 'function'); 
         // необязательная настройка - значение таймаута в мс, по которому кнопка будет принимать состояние "выкл"
         // если _TimeoutDelay <= 0, то таймеры не взводятся

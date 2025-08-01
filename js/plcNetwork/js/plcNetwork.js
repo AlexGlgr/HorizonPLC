@@ -1,9 +1,3 @@
-const MSG_WIFI_CONNECTED = 'Connected! IP: ';
-const FLAG_ETHERNET = 1 << 1;
-const FLAG_WIFI = 1 << 0;
-const MSG_TIMEOUT = 'Failed to connect in 10 seconds.'
-
-
 /**
  * @class
  * Модуль обеспечивает работу платформы с сетевым соединением,
@@ -36,11 +30,11 @@ class ClassNetwork {
      * @param {Object} bus
      */
     Init(nc, bus, flag, callback) {
-        if (flag & FLAG_ETHERNET) {
+        if (flag & 2) {
             this._ChipType = 'W5500';
             this.EtherSequence(nc, bus, callback);
         }
-        else if (flag & FLAG_WIFI) {
+        else if (flag & 1) {
             if (bus) {
                 if (typeof this._BaseModule === 'undefined') {
                     H.Logger.Service.Log({service: this._Name, level: 'E', msg: 'Base module for WiFi is not specified. Aborting. . .'});
@@ -210,7 +204,7 @@ class ClassNetwork {
     Connect(pass, callback) {
         H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Got credentials. Attempting establish connection to ${this._Ssid}.`});
         let tOut = setTimeout (() => {
-            H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_TIMEOUT});
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Failed to connect in 10 seconds.'});
             callback(false);
             return;
         }, 10000);
@@ -233,7 +227,7 @@ class ClassNetwork {
                     else {
                         clearTimeout(tOut);
                         this._Ip = info.ip;
-                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: `${MSG_WIFI_CONNECTED + this._Ip}`});
+                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: `Connected! IP: ${this._Ip}`});
                         callback(true);
                     }
                 });

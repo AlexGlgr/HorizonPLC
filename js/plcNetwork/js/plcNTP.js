@@ -1,8 +1,7 @@
-const MSG_ERR = 'NTP error: ';
-const MSG_UPDATE = 'Time updated';
-const MSG_SKT_CLOSED = 'UDP socket closed';
-const MSG_TIMEOUT = 'Request timed out';
-
+/**
+ * @class
+ * @description Класс предназначен для работы с NTP сервером и установкой актуального времени на устройстве
+ */
 class ClassNTP {
     /**
      * @constructor
@@ -20,9 +19,14 @@ class ClassNTP {
         this._Tz = options.tz || '0';
         Object.on('netReady', () => setTimeout(() => {this.SetNTP();}, Process.GetRandomStartupInterval()));
     }
+    /**
+     * @method
+     * @description Вызовает NTP функции в зависимости от сетевого модуля, который использован для
+     * подключения к сети. Вызов этого метода происходит автоматически при появлении подключения к сети
+     */
     SetNTP() {
         let tOut = setTimeout (() => {
-            H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_TIMEOUT});
+            H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Request timed out'});
             Object.emit('ntp_done');
         }, 5000);
         try {
@@ -31,7 +35,7 @@ class ClassNTP {
                     H.Network.Service._Core.setSNTP(this._Host, this._Tz);
                     clearTimeout(tOut);
                     E.setTimeZone(this._Tz);
-                    H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_UPDATE});
+                    H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Time updated'});
                     Object.emit('ntp_done');
                     break;
                 case 'W5500':
@@ -42,7 +46,7 @@ class ClassNTP {
 
                     socket.on('error', (err) => {
                         clearTimeout(tOut);
-                        H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_ERR} ${err.message}!`});
+                        H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${err.message}!`});
                         Object.emit('ntp_done');
                     });
 
@@ -53,13 +57,13 @@ class ClassNTP {
                         setTime(timestamp / 1000);
                         clearTimeout(tOut);
                         E.setTimeZone(this._Tz);
-                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_UPDATE});
+                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'Time updated'});
                         Object.emit('ntp_done');
                     });
         
                     socket.on('close', () => {
                         clearTimeout(tOut);
-                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: MSG_SKT_CLOSED});
+                        H.Logger.Service.Log({service: this._Name, level: 'I', msg: 'UDP socket closed'});
                     });
                     
                     message[0] = (0 << 6) + (3 << 3) + (3 << 0);
@@ -68,7 +72,7 @@ class ClassNTP {
 
                     socket.send(E.toString(message), this._Port, this._Host, (err, bytes) => {
                     if (err || bytes !== 48) {
-                            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${MSG_ERR} ${err}`});
+                            H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${err}`});
                         }
                     });
                     break;
@@ -78,6 +82,13 @@ class ClassNTP {
             H.Logger.Service.Log({service: this._Name, level: 'E', msg: `${e}`});
         }
     }
+    /**
+     * @method
+     * @description Преобразует данные из пакета во время
+     * @param {DataView} dv         - данные из пакета в сыром виде 
+     * @param {Integer} offset      - отступ, с какого бита в пакете начинаются данные о времени
+     * @returns {Number}            - количество секунд от 1 января 1970 года
+     */
     NTPtoMsecs(dv, offset) {
         let seconds = dv.getUint32(offset);
         let fraction = dv.getUint32(offset + 4);

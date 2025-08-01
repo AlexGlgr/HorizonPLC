@@ -26,6 +26,7 @@ class ClassLogger {
             this._Socket;
             this._Debug = options.debug || false;
             this._gl = true;
+            this._Stored = [];
             this._tOut = Process.GetRandomStartupInterval();
             Object.on('netReady', () => setTimeout(() => {this._Socket = H.Network.Service.CreateSocket(this._Server, this._Port, 'udp', this._Name);}, Process.GetRandomStartupInterval()));
         }
@@ -52,15 +53,17 @@ class ClassLogger {
             flevel = level+2;
         }
 
-        if (Process._HaveNet && this._gl && this._Socket != undefined) {            
-            this.WriteToGraylog({message: _msg.msg, level: flevel, level_desc: fdesc, service: _msg.service, full_message: _msg.obj || {}});            
+        if (Process._HaveNet && this._gl && this._Socket !== undefined) {
+            this.WriteToGraylog({message: _msg.msg, level: flevel, level_desc: fdesc, service: _msg.service, full_message: _msg.obj || {}});
+            served = true;         
         }
-        else if (level <= 1){
-            this.WriteToFile({service: _msg.service, fdesc: fdesc, msg: _msg.msg})
+        if (level <= 1) {
+            this.WriteToFile({service: _msg.service, fdesc: fdesc, msg: _msg.msg});
         }
-        else if (Process._HaveConsole || this._Debug) {
+        if (Process._HaveConsole || this._Debug) {
             this.WriteToConsole({service: _msg.service, fdesc: fdesc, msg: _msg.msg});
-        }        
+            served = true;
+        }
     }
     /**
      * @method
