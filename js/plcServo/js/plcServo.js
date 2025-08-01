@@ -17,7 +17,8 @@ class ClassServo extends ClassActuator {
      * @param {ActuatorOptsType} _opts
      */
     constructor(_opts) {
-        ClassActuator.call(this, _opts);
+        //ClassActuator.call(this, _opts);
+        super(_opts);
         /******************** Validation and init ********************** */
         if (typeof _opts.range !== 'number' || 
             typeof _opts.maxPulse !== 'number' ||

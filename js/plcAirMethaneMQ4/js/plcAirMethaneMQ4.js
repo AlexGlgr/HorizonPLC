@@ -10,7 +10,8 @@ class ClassAirMethaneMQ4 extends ClassSensor {
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'ClassAirMethaneMQ4'; //переопределяем имя типа
 		this._Sensor = require('BaseClassMQX.min.js').connect({dataPin: _opts.pins[0], heatPin: _opts.pins[1], model: 'MQ4', r0: _opts.baseline});
         this._MinPeriod = 250;

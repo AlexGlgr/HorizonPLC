@@ -12,6 +12,7 @@ class ClassSHT31 extends ClassSensor {
      */
     constructor(_opts) {
         ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'ClassSHT31'; //переопределяем имя типа
 		this._Sensor = require("BaseClassSHT31.min.js").connect(_opts.bus, _opts.address, _opts.repeatability);
         this._MinPeriod = 250;

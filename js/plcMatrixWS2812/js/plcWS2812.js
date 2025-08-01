@@ -56,7 +56,8 @@ const ClassActuator = require('plcActuator.min.js');
  */
 class ClassLedStrip extends ClassActuator {
     constructor(opts) {
-        ClassActuator.call(this, opts);
+        super(opts);
+        //ClassActuator.call(this, opts);
         this._Length = opts.length;
         this._Values = new Uint8ClampedArray(opts.length*3);
     }

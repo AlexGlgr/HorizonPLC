@@ -17,7 +17,8 @@ const proportion = (x, in_min, in_max, out_min, out_max) => {
 class ClassBuzzer extends ClassActuator {
     constructor(_opts) {
         this.name = 'Buzzer';                               
-        ClassActuator.call(this, _opts);   //вызов родительского конструктора
+        //ClassActuator.call(this, _opts);   //вызов родительского конструктора
+        super(_opts);
         this._MinFreq = 0;
         this._MaxFreq = _opts.maxFreq || 4000;
 

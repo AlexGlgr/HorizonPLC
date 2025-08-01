@@ -17,7 +17,8 @@ const ClassSensor = require('plcSensor.min.js');
  */
 class ClassButton extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);
+        //ClassSensor.call(this, opts);
+        super(opts);
         // задание debounce и holdTime либо в согласии с конфигом либо по умолчанию
         this.Configure(0, { holdTime: opts.holdTime || 1.2, debounce: opts.debounce || 20 });
         this._Pins[0].mode('input');

@@ -12,14 +12,15 @@ class ClassDS1307 extends ClassSensor {
 	 * @param {Object} _opts   			- Объект с параметрами по нотации ClassSensor
 	 * @param {Object} _sensor_props    - Объект для инициализации по нотации ClassSensor
      */
-    constructor(_opts, _sensor_props) {
-		ClassSensor.apply(this, [_opts, _sensor_props]);
+    constructor(_opts) {
+		//ClassSensor.apply(this, [_opts, _sensor_props]);
+		super(_opts);
         this._Name = 'ClassClassDS1307'; //переопределяем имя типа
 		this._Rtc = require('BaseClassDS1307.min.js').connect(_opts.bus);
 		this._MinPeriod = 100;
 		this._UsedChannels = [];
         this._Interval;
-		this.Init(_sensor_props);
+		//this.Init(_sensor_props);
     }
 	/*******************************************CONST********************************************/
 	/**

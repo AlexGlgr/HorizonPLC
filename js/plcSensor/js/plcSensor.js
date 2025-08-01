@@ -21,7 +21,8 @@ class ClassSensor extends ClassDevice {
      * @param {SensorPropsType} _opts
      */
     constructor(_opts) {
-        ClassDevice.call(this, _opts);
+        //ClassDevice.call(this, _opts);
+        super(_opts);
         this._Channels = Array(Object.keys(this._ChannelNames).length);
         // создание каналов
         Object.keys(this._ChannelNames).forEach(_chName => {

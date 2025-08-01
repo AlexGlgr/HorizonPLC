@@ -4,7 +4,8 @@
  */
 class ClassThermoTMP36 extends ClassSensor {
     constructor(_opts) {
-        ClassSensor.call(this, _opts, _opts);
+        //ClassSensor.call(this, _opts, _opts);
+        super(_opts);
         if (this._Pins.length < 1) throw new Error();
         pinMode(this._Pins[0], 'analog', true);
     }

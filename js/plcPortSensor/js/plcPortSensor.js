@@ -8,7 +8,8 @@ const INPUT_PIN_MODES = ['analog', 'input', 'input_pullup', 'input_pulldown', 'a
  */
 class ClassPortSensor extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);
+        //ClassSensor.call(this, opts);
+        super(opts);
         this._TypeInSignals = opts.typeInSignals;
         // Кол-во портов (_Pins) обязано быть равно _QuantityChannel
         // if (this._ChannelNames.length !== this._Pins.length)

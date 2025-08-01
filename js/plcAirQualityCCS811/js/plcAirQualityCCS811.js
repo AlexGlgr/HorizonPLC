@@ -10,7 +10,8 @@ class ClassAirQualityCCS811 extends ClassSensor {
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'ClassAirQualityCCS811'; //переопределяем имя типа
 		this._Sensor = require('BaseClassCCS811.min.js').connect(_opts.bus, _opts.address, _opts.mode);
         this._MinPeriod = 250;

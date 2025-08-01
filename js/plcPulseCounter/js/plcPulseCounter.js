@@ -5,7 +5,8 @@
  */
 class ClassPulseCounter extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);
+        //ClassSensor.call(this, opts);
+        super(opts);
         this._SetWatch;
         this._Interval = Array(2);
     }

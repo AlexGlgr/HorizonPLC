@@ -180,7 +180,8 @@ class ClassPowerINA219 extends ClassSensor {
      * адрес датчика address и его конфигурацию config (опциональные поля)
      */
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'ClassPowerINA219'; //переопределяем имя типа
         this._Sensor = new LowLevelClassINA(_opts.bus, _opts.address);
         this._Config = _opts.config || {};

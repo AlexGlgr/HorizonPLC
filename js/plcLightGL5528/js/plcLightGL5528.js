@@ -9,7 +9,8 @@ const POW = -1.5832;
  */
 class ClassLightGL5528 extends ClassSensor {
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._K = _opts.k || MULT;
         this._P = _opts.p || POW;
         if (this._Pins.length < 1 || 

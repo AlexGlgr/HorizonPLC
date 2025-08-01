@@ -9,7 +9,8 @@ const OUTPUT_PIN_MODES = ['output', 'analog', 'opendrain', 'af_output', 'af_open
  */
 class ClassPortActuator extends ClassActuator {
     constructor(opts) {
-        ClassActuator.call(this, opts);
+        //ClassActuator.call(this, opts);
+        super(opts);
         this._TypeOutSignals = opts.typeInSignals;
 
         if (Object.keys(this._ChannelNames).length !== this._Pins.length)

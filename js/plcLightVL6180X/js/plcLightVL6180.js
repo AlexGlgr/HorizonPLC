@@ -77,7 +77,8 @@ const REG_ADDR = {
  */
 class ClassVL6180 extends ClassSensor {
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this.Init();
         this._MinPeriod = 120;
     }

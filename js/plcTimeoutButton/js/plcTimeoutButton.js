@@ -1,6 +1,7 @@
 class ClassTimeoutButton extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);    
+        //ClassSensor.call(this, opts);
+        super(opts);   
         this._TimeoutDelay = opts.timeout || 5;
         this._Debounce = this._Debounce = (opts.debounce > 0) ? opts.debounce : 50;
 

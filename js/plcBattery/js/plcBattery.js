@@ -14,7 +14,8 @@ const MAX_PERIOD = ~~Math.sqrt(Number.MAX_SAFE_INTEGER);
  */
 class ClassBattery extends ClassSensor {
     constructor(opts) {
-        ClassSensor.call(this, opts);
+        super(_opts);
+        //ClassSensor.call(this, opts);
         this._K = opts.k;                       // кэф делителя напряжения
         this._FullChargeV = opts.fullChargeV;   // напряжение на заряженном аккумуляторе
         this._DischargeV = opts.dischargeV;     // напряжение на разряженном

@@ -190,7 +190,8 @@ class ClassPowerINA3221 extends ClassSensor {
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'ClassPowerINA3221'; //переопределяем имя типа
         this._Sensor = new LowLevelClassINA3221(_opts.bus, _opts.address);
         this._Config = _opts.config || {};

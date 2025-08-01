@@ -10,7 +10,8 @@ class ClassLPS25HB extends ClassSensor {
      * @param {Object} _opts   - Объект с параметрами по нотации ClassSensor
      */
     constructor(_opts) {
-        ClassSensor.call(this, _opts);
+        //ClassSensor.call(this, _opts);
+        super(_opts);
         this._Name = 'BaseClassLPS25HB'; //переопределяем имя типа
 		this._Sensor = require('BaseClassLPS25HB.min.js').connect({i2c: _opts.bus, address: _opts.address});
         this._MinPeriod = 125;
