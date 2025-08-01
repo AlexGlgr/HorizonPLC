@@ -30,9 +30,9 @@ class ClassRouteREPL {
         this._DfltConsole = eval(E.getConsole()); // eval позволяет хранить инициализированный объект UART шины. Это необходимо для работы с его функционалом из класса Route   
         this._IsOn = false;
         this._Name = 'RouteREPL';
-        this._Port = _opts.port || 23;
+        this._Port = _opts.port;
         this._Sending = false;
-        Process._HaveConsole = this.isREPLConnected();
+        Process._HaveConsole = Boolean(this.ConsoleType); 
         // авто запуск роутинга после полного старта фреймворка
         Object.on('complete', () => {
             // если была передана UART-шина, нужно сохранить ссылку на нее и выполнить setup()
@@ -54,7 +54,7 @@ class ClassRouteREPL {
 
         if (console == 'LoopbackA' && isSocket(this._Source)) return 'TCP';
         if (console == 'USB' && E.isUSBConnected()) return console; //USB
-        if (!console) return 'null';
+        if (!console) return null;
         if (console.startsWith('Serial')) return 'UART';
         return '';      //  unexpected behavior
     }
@@ -65,7 +65,7 @@ class ClassRouteREPL {
      */
     RouteOn() {
         try {
-            if (H.Network)  
+            if (H.Network && typeof this._Port == 'number')  
                 this.ListenTCP(); 
             if (this._Bus instanceof Serial && this._Bus.isConnected()) 
                 this.ListenUART();
@@ -179,6 +179,7 @@ class ClassRouteREPL {
         try {
             H.Logger.Service._HaveConsole = this.ConsoleType != 'null' ? true : false;
         } catch (e) {}
+        Process._HaveConsole = Boolean(this.ConsoleType); 
         if (typeof _cb =='function') _cb();
     }
     /**
@@ -187,8 +188,8 @@ class ClassRouteREPL {
      * @returns 
      */
     isREPLConnected(_flag) {
-        //let func = USB.isConnected() || E.isUSBConnected() || (() => false);
-        return Boolean(this._IsOn || USB.isConnected() || E.isUSBConnected());
+        let func = USB.isConnected || E.isUSBConnected || (() => false);
+        return Boolean(this._IsOn || func());
     }
     /**
      * @method

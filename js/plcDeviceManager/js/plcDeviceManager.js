@@ -354,7 +354,6 @@ class ClassDeviceManager {
             H.Logger.Service.Log({ service: 'DM', level: 'E', msg: `Pins [${opts.pins.join(', ')}] are already used` });
             return undefined;
         }
-        
         try {
             let device = new module(sensorConfig);
             this.AddDevice(device);
